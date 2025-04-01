@@ -20,3 +20,9 @@ rad.json
 *.flf
 #Test results file
 TestResults.xml
+senti_results_SZ/
+service_program_data/
+docs/
+*.png
+service_program_matches/
+service_program_matches_SZ/
