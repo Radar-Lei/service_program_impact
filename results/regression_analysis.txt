@@ -1,0 +1,34 @@
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:     net_sentiment_mean   R-squared:                       0.215
+Model:                            OLS   Adj. R-squared:                 -0.151
+Method:                 Least Squares   F-statistic:                    0.5885
+Date:                Tue, 01 Apr 2025   Prob (F-statistic):              0.756
+Time:                        23:51:11   Log-Likelihood:                 1.9425
+No. Observations:                  23   AIC:                             12.11
+Df Residuals:                      15   BIC:                             21.20
+Df Model:                           7                                         
+Covariance Type:            nonrobust                                         
+=========================================================================================================
+                                            coef    std err          t      P>|t|      [0.025      0.975]
+---------------------------------------------------------------------------------------------------------
+const                                    -0.2044      0.065     -3.149      0.007      -0.343      -0.066
+category_Comfort-Temperature             -0.0394      0.251     -0.157      0.878      -0.575       0.496
+category_Convenience Facilities          -0.1764      0.251     -0.702      0.494      -0.712       0.359
+category_Crowding Management             -0.0976      0.251     -0.388      0.703      -0.633       0.438
+category_Information Services             0.1361      0.155      0.881      0.392      -0.193       0.465
+category_Other                            0.1223      0.155      0.792      0.441      -0.207       0.452
+category_Personnel Services              -0.2324      0.184     -1.266      0.225      -0.624       0.159
+category_Reliability & Frequency         -0.0241      0.118     -0.204      0.841      -0.277       0.228
+category_Ticketing Services & Pricing     0.1071      0.118      0.904      0.380      -0.145       0.360
+==============================================================================
+Omnibus:                        1.269   Durbin-Watson:                   2.292
+Prob(Omnibus):                  0.530   Jarque-Bera (JB):                1.167
+Skew:                          -0.438   Prob(JB):                        0.558
+Kurtosis:                       2.329   Cond. No.                     6.93e+15
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+[2] The smallest eigenvalue is 5.71e-31. This might indicate that there are
+strong multicollinearity problems or that the design matrix is singular.
