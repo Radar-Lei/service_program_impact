@@ -129,334 +129,229 @@ blockquote {
 
 </head>
 <body>
-    <h1 id="impact-analysis-of-metro-service-programs-on-passenger-experience">Impact Analysis of Metro Service Programs on Passenger Experience</h1>
-<h2 id="1-introduction">1. Introduction</h2>
-<p>This research examines the efficacy of various service improvement programs implemented by the Shenzhen Metro on passenger experience. Through systematic analysis of passenger feedback collected from social media platforms, this study employs sentiment analysis methodologies coupled with statistical techniques to quantitatively evaluate the relationship between service initiatives and passenger satisfaction. The findings provide empirical evidence to inform future policy decisions and resource allocation for urban transit improvement programs.</p>
-<h2 id="2-methodology">2. Methodology</h2>
-<h3 id="21-data-sources">2.1 Data Sources</h3>
-<p>This study utilized two primary datasets:</p>
+    <h1 id="service-program-impact-analysis-report">Service Program Impact Analysis Report</h1>
+<h2 id="introduction">Introduction</h2>
+<p>This report analyzes the impact of various service programs on passenger experience based on sentiment analysis of social media feedback. The analysis examines how passenger sentiment changed before and after the implementation of each service program.</p>
+<h2 id="methodology">Methodology</h2>
+<p>The analysis employs three primary methods:</p>
 <ol>
-<li>
-<p><strong>Service Program Data</strong>: Comprehensive information on 23 distinct service improvement initiatives implemented by the Shenzhen Metro, including program descriptions, implementation dates, and related service quality dimensions.</p>
-</li>
-<li>
-<p><strong>Passenger Feedback Data</strong>: Social media feedback associated with each service program, including sentiment analysis scores obtained through natural language processing techniques.</p>
-</li>
+<li><strong>Basic Statistical Analysis</strong>: Comparing pre- and post-implementation sentiment scores using t-tests</li>
+<li><strong>Categorical Analysis</strong>: Using Chi-square or Fisher's exact tests to analyze sentiment distribution shifts</li>
+<li><strong>Interrupted Time Series (ITS) Analysis</strong>: Examining changes in both level (immediate effect) and trend (longer-term effect) of sentiment after program implementation</li>
 </ol>
-<h3 id="22-text-matching-and-preprocessing">2.2 Text Matching and Preprocessing</h3>
-<p>To establish relationships between service programs and relevant passenger feedback, we employed a vector-based semantic matching approach:</p>
-<ol>
-<li><strong>Document Embedding</strong>: All social media posts were transformed into vector representations using a multilingual embedding model:</li>
-</ol>
-<p>$$E(d_i) = f_{\text{embedding}}(d_i)$$</p>
-<p>where $E(d_i)$ is the embedding vector for document $d_i$, and $f_{\text{embedding}}$ is the embedding function using the "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2" model.</p>
-<ol>
-<li><strong>Vector Database Construction</strong>: A vector database was created to enable efficient similarity searches:</li>
-</ol>
-<p>$$\text{VectorDB} = {E(d_1), E(d_2), ..., E(d_n)}$$</p>
-<ol>
-<li><strong>Semantic Matching</strong>: For each service program $p_j$, relevant posts were identified through cosine similarity calculation:</li>
-</ol>
-<p>$$\text{sim}(p_j, d_i) = \frac{E(p_j) \cdot E(d_i)}{||E(p_j)|| \cdot ||E(d_i)||}$$</p>
-<ol>
-<li><strong>Threshold Selection</strong>: The top $k=100$ most similar documents were retrieved for each service program:</li>
-</ol>
-<p>$$\text{Matches}(p_j) = \text{TopK}({\text{sim}(p_j, d_i) | d_i \in \text{Documents}}, k=100)$$</p>
-<p>This approach ensured that only the most semantically relevant feedback was associated with each service program, reducing noise and improving the validity of subsequent sentiment analysis.</p>
-<h3 id="23-sentiment-analysis-metrics">2.3 Sentiment Analysis Metrics</h3>
-<p>The following sentiment metrics were calculated for quantitative assessment:</p>
-<ol>
-<li><strong>Net Sentiment Score</strong> ($S_{net}$): Calculated as the difference between positive and negative sentiment scores:</li>
-</ol>
-<p>$$S_{net} = S_{pos} - S_{neg}$$</p>
-<p>where $S_{pos}$ and $S_{neg}$ represent the positive and negative sentiment scores respectively.</p>
-<ol>
-<li><strong>Sentiment Ratio</strong> ($R_{sent}$): Calculated as the proportion of positive sentiment relative to the total sentiment:</li>
-</ol>
-<p>$$R_{sent} = \frac{S_{pos}}{S_{pos} + S_{neg}}$$</p>
-<ol>
-<li><strong>Program-Level Aggregation</strong>: For each service program $p_j$, aggregate metrics were calculated:</li>
-</ol>
-<p>$$\bar{S}<em _in="\in" _text_Matches="\text{Matches" d_i="d_i">{net}(p_j) = \frac{1}{|\text{Matches}(p_j)|} \sum</em>(d_i)$$}(p_j)} S_{net</p>
-<p>$$\bar{S}<em _in="\in" _text_Matches="\text{Matches" d_i="d_i">{pos}(p_j) = \frac{1}{|\text{Matches}(p_j)|} \sum</em>(d_i)$$}(p_j)} S_{pos</p>
-<p>$$\bar{S}<em _in="\in" _text_Matches="\text{Matches" d_i="d_i">{neg}(p_j) = \frac{1}{|\text{Matches}(p_j)|} \sum</em>(d_i)$$}(p_j)} S_{neg</p>
-<h3 id="24-program-categorization">2.4 Program Categorization</h3>
-<p>Service initiatives were systematically classified into distinct categories based on their primary service quality dimension:</p>
-<ol>
-<li><strong>Comfort-Temperature</strong>: Programs focusing on ambient temperature control</li>
-<li><strong>Information Services</strong>: Programs enhancing information dissemination and accessibility</li>
-<li><strong>Ticketing Services &amp; Pricing</strong>: Programs improving payment systems or fare structures</li>
-<li><strong>Convenience Facilities</strong>: Programs upgrading physical amenities</li>
-<li><strong>Crowding Management</strong>: Programs addressing passenger density issues</li>
-<li><strong>Reliability &amp; Frequency</strong>: Programs enhancing service dependability and intervals</li>
-<li><strong>Personnel Services</strong>: Programs improving staff interactions and service delivery</li>
-<li><strong>Other</strong>: Programs not fitting into the above categories</li>
-</ol>
-<h3 id="25-statistical-analysis">2.5 Statistical Analysis</h3>
-<p>To determine the significance of observed differences, the following statistical analyses were conducted:</p>
-<ol>
-<li><strong>Analysis of Variance (ANOVA)</strong>: To test the null hypothesis that sentiment scores across different program categories have equal means:</li>
-</ol>
-<p>$$H_0: \mu_1 = \mu_2 = ... = \mu_k$$
-   $$H_1: \text{At least one } \mu_i \neq \mu_j \text{ for } i \neq j$$</p>
-<p>where $\mu_i$ represents the mean sentiment score for category $i$.</p>
-<ol>
-<li><strong>Tukey's Honestly Significant Difference (HSD) Test</strong>: For multiple pairwise comparisons to identify specific program pairs with statistically significant differences:</li>
-</ol>
-<p>$$q = \frac{\bar{y}_i - \bar{y}_j}{\sqrt{MS_W/n}}$$</p>
-<p>where $\bar{y}_i$ and $\bar{y}_j$ are the means of groups $i$ and $j$, $MS_W$ is the mean square within, and $n$ is the number of observations per group.</p>
-<ol>
-<li><strong>Regression Analysis</strong>: To model the relationship between program categories and sentiment scores:</li>
-</ol>
-<p>$$S_{net} = \beta_0 + \sum_{i=1}^{k} \beta_i X_i + \epsilon$$</p>
-<p>where $X_i$ are dummy variables for program categories, $\beta_i$ are the regression coefficients, and $\epsilon$ is the error term.</p>
-<h2 id="3-results">3. Results</h2>
-<h3 id="31-overall-program-sentiment-scores">3.1 Overall Program Sentiment Scores</h3>
-<p>The service programs were ranked by net sentiment score (positive minus negative), revealing substantial variation in passenger perception across different initiatives:</p>
-<p><img alt="Net Sentiment Ranking" src="figures/net_sentiment_by_program.png" /></p>
-<p><strong>Top 5 Service Programs by Sentiment Score:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Rank</th>
-<th>Service Program</th>
-<th>Net Sentiment</th>
-<th>Program Category</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>深圳通连接深港可用于跨境巴士</td>
-<td>0.2262</td>
-<td>Ticketing Services &amp; Pricing</td>
-</tr>
-<tr>
-<td>2</td>
-<td>创建1+365+N志愿者生态系统</td>
-<td>0.2172</td>
-<td>Other</td>
-</tr>
-<tr>
-<td>3</td>
-<td>成功推出"深圳通"乘车码</td>
-<td>0.1563</td>
-<td>Ticketing Services &amp; Pricing</td>
-</tr>
-<tr>
-<td>4</td>
-<td>智能动态地图显示系统</td>
-<td>0.0999</td>
-<td>Information Services</td>
-</tr>
-<tr>
-<td>5</td>
-<td>智能网联无人驾驶巴士</td>
-<td>0.0900</td>
-<td>Reliability &amp; Frequency</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Bottom 5 Service Programs by Sentiment Score:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Rank</th>
-<th>Service Program</th>
-<th>Net Sentiment</th>
-<th>Program Category</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>已开通八条招手停靠公交线路</td>
-<td>-0.5713</td>
-<td>Reliability &amp; Frequency</td>
-</tr>
-<tr>
-<td>2</td>
-<td>启动"侧门手持机"项目</td>
-<td>-0.5686</td>
-<td>Personnel Services</td>
-</tr>
-<tr>
-<td>3</td>
-<td>实施免费乘车和优惠乘车</td>
-<td>-0.5313</td>
-<td>Ticketing Services &amp; Pricing</td>
-</tr>
-<tr>
-<td>4</td>
-<td>移动母婴室</td>
-<td>-0.5203</td>
-<td>Other</td>
-</tr>
-<tr>
-<td>5</td>
-<td>7号线压缩地铁行车间隔</td>
-<td>-0.4566</td>
-<td>Reliability &amp; Frequency</td>
-</tr>
-</tbody>
-</table>
-<p><img alt="Highest and Lowest Scoring Programs" src="figures/top_bottom_programs.png" /></p>
-<h3 id="32-analysis-by-program-category">3.2 Analysis by Program Category</h3>
-<p>Analysis of the aggregated sentiment scores across program categories revealed systematic differences in passenger response patterns:</p>
-<p><img alt="Program Category Comparison" src="figures/category_comparison.png" /></p>
-<table>
-<thead>
-<tr>
-<th>Program Category</th>
-<th>Average Net Sentiment</th>
-<th>Average Positive</th>
-<th>Average Negative</th>
-<th>Program Count</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Ticketing Services &amp; Pricing</td>
-<td>-0.0972</td>
-<td>0.4724</td>
-<td>0.5697</td>
-<td>6</td>
-</tr>
-<tr>
-<td>Information Services</td>
-<td>-0.0683</td>
-<td>0.4949</td>
-<td>0.5632</td>
-<td>3</td>
-</tr>
-<tr>
-<td>Other</td>
-<td>-0.0820</td>
-<td>0.4827</td>
-<td>0.5647</td>
-<td>3</td>
-</tr>
-<tr>
-<td>Reliability &amp; Frequency</td>
-<td>-0.2285</td>
-<td>0.4186</td>
-<td>0.6471</td>
-<td>6</td>
-</tr>
-<tr>
-<td>Comfort-Temperature</td>
-<td>-0.2438</td>
-<td>0.4314</td>
-<td>0.6751</td>
-<td>1</td>
-</tr>
-<tr>
-<td>Crowding Management</td>
-<td>-0.3020</td>
-<td>0.3867</td>
-<td>0.6887</td>
-<td>1</td>
-</tr>
-<tr>
-<td>Convenience Facilities</td>
-<td>-0.3808</td>
-<td>0.3308</td>
-<td>0.7116</td>
-<td>1</td>
-</tr>
-<tr>
-<td>Personnel Services</td>
-<td>-0.4367</td>
-<td>0.3291</td>
-<td>0.7659</td>
-<td>2</td>
-</tr>
-</tbody>
-</table>
-<p><img alt="Category Positive-Negative Comparison" src="figures/positive_negative_by_category.png" /></p>
-<p><img alt="Positive vs Negative Comparison" src="figures/positive_vs_negative_scatter.png" /></p>
-<p>These results indicate that Ticketing Services &amp; Pricing initiatives received the most favorable overall sentiment, while Personnel Services programs generated the most negative sentiment responses.</p>
-<h3 id="33-statistical-analysis-results">3.3 Statistical Analysis Results</h3>
-<p>The ANOVA analysis examining differences between program categories yielded significant results:</p>
+<h2 id="key-findings">Key Findings</h2>
+<h3 id="overall-impact">Overall Impact</h3>
 <ul>
-<li>$F$-statistic: 10.3677</li>
-<li>$p$-value: 0.0000 (&lt; 0.05)</li>
-<li>Conclusion: Strong evidence exists to reject the null hypothesis of equal means across program categories</li>
+<li><strong>23</strong> service programs were analyzed</li>
+<li><strong>15</strong> programs showed positive sentiment change after implementation</li>
+<li><strong>8</strong> programs showed negative sentiment change after implementation</li>
+<li><strong>6</strong> programs showed statistically significant changes (p &lt; 0.05)</li>
 </ul>
-<p>The Tukey HSD test identified 78 significant pairwise differences between individual programs at $\alpha = 0.05$, with particularly strong contrasts observed between:</p>
+<h3 id="top-positive-impact-programs">Top Positive Impact Programs</h3>
+<table>
+<thead>
+<tr>
+<th>Program ID</th>
+<th>Program Name</th>
+<th>Mean Sentiment Change</th>
+<th>p-value</th>
+<th>Significant</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>8</td>
+<td>实施免费乘车和优惠乘车</td>
+<td>0.3961</td>
+<td>0.0035</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>5</td>
+<td>完成82个站点卫生间改造</td>
+<td>0.3217</td>
+<td>0.0037</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>14</td>
+<td>地铁4号线导向牌升级液晶显示屏</td>
+<td>0.2137</td>
+<td>0.0191</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>15</td>
+<td>移动母婴室</td>
+<td>0.1928</td>
+<td>0.0386</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>6</td>
+<td>在高新园站安装钢梯</td>
+<td>0.1117</td>
+<td>0.2169</td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+<h3 id="top-negative-impact-programs">Top Negative Impact Programs</h3>
+<table>
+<thead>
+<tr>
+<th>Program ID</th>
+<th>Program Name</th>
+<th>Mean Sentiment Change</th>
+<th>p-value</th>
+<th>Significant</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2</td>
+<td>车厢拥挤度智能显示系统</td>
+<td>-0.2111</td>
+<td>0.0335</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>3</td>
+<td>实现BOM第三方支付</td>
+<td>-0.1540</td>
+<td>0.3829</td>
+<td>No</td>
+</tr>
+<tr>
+<td>12</td>
+<td>延长工作日和周末服务时间</td>
+<td>-0.1416</td>
+<td>0.1315</td>
+<td>No</td>
+</tr>
+<tr>
+<td>17</td>
+<td>智能测温机器人</td>
+<td>-0.1141</td>
+<td>0.0423</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>0</td>
+<td>同一车厢不同温度模式</td>
+<td>-0.0829</td>
+<td>0.2737</td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+<h3 id="interrupted-time-series-analysis-results">Interrupted Time Series Analysis Results</h3>
+<p>The ITS analysis provides more robust evidence of program impact by examining both immediate changes (level) and longer-term changes (trend) in sentiment.</p>
+<h4 id="programs-with-significant-trend-changes">Programs with Significant Trend Changes</h4>
+<table>
+<thead>
+<tr>
+<th>Program ID</th>
+<th>Program Name</th>
+<th>Baseline Trend</th>
+<th>Trend Change</th>
+<th>p-value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>智能动态地图显示系统</td>
+<td>-0.0362</td>
+<td>0.0461</td>
+<td>0.0072</td>
+</tr>
+<tr>
+<td>18</td>
+<td>已开通八条招手停靠公交线路</td>
+<td>-0.0023</td>
+<td>0.0059</td>
+<td>0.0072</td>
+</tr>
+<tr>
+<td>17</td>
+<td>智能测温机器人</td>
+<td>nan</td>
+<td>0.0034</td>
+<td>0.0351</td>
+</tr>
+<tr>
+<td>16</td>
+<td>大鹏新区开设地铁接驳专线</td>
+<td>nan</td>
+<td>-0.0083</td>
+<td>0.0204</td>
+</tr>
+</tbody>
+</table>
+<h4 id="programs-with-significant-level-changes">Programs with Significant Level Changes</h4>
+<table>
+<thead>
+<tr>
+<th>Program ID</th>
+<th>Program Name</th>
+<th>Baseline Level</th>
+<th>Level Change</th>
+<th>p-value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>15</td>
+<td>移动母婴室</td>
+<td>-0.1887</td>
+<td>-0.3629</td>
+<td>0.0434</td>
+</tr>
+</tbody>
+</table>
+<h2 id="detailed-examples">Detailed Examples</h2>
+<h3 id="example-of-positive-impact-program-8-">Example of Positive Impact: Program 8 - 实施免费乘车和优惠乘车</h3>
+<p>This program showed a significant positive change in passenger sentiment after implementation (mean difference: 0.3961, p=0.0035).</p>
+<h4 id="visual-evidence">Visual Evidence</h4>
+<p><img alt="Time Series Plot" src="figures/program_8_timeseries.png" /></p>
+<p><img alt="ITS Analysis" src="figures/its/program_8_its.png" /></p>
+<p>The placebo tests confirm that the observed effect is likely due to the program rather than chance variation.</p>
+<h3 id="example-of-non-significant-impact-program-6-">Example of Non-Significant Impact: Program 6 - 在高新园站安装钢梯</h3>
+<p>This program did not show a statistically significant change in passenger sentiment (mean difference: 0.1117, p=0.2169).</p>
+<h4 id="visual-evidence_1">Visual Evidence</h4>
+<p><img alt="Time Series Plot" src="figures/program_6_timeseries.png" /></p>
+<h2 id="overall-results-visualization">Overall Results Visualization</h2>
+<h3 id="basic-statistical-analysis">Basic Statistical Analysis</h3>
+<p><img alt="Mean Sentiment Differences" src="figures/overall_mean_diff_barplot.png" /></p>
+<p><img alt="Pre vs Post Scatter" src="figures/pre_vs_post_mean_scatter.png" /></p>
+<h3 id="interrupted-time-series-analysis">Interrupted Time Series Analysis</h3>
+<p><img alt="Trend Changes" src="figures/its/overall_trend_change.png" /></p>
+<p><img alt="Level Changes" src="figures/its/overall_level_change.png" /></p>
+<p><img alt="Level vs Trend Changes" src="figures/its/level_vs_trend.png" /></p>
+<h2 id="limitations-and-considerations">Limitations and Considerations</h2>
+<p>Several limitations should be considered when interpreting these results:</p>
 <ol>
-<li>Programs in the Ticketing Services &amp; Pricing category and those in Personnel Services ($p &lt; 0.001$)</li>
-<li>Information Services programs and Reliability &amp; Frequency programs ($p &lt; 0.01$)</li>
-<li>High-performing programs (those with positive net sentiment) and low-performing programs (those with strongly negative net sentiment) ($p &lt; 0.001$)</li>
-</ol>
-<h3 id="34-regression-analysis-results">3.4 Regression Analysis Results</h3>
-<p>The regression model examining the relationship between program categories and net sentiment scores produced the following results:</p>
-<div class="codehilite"><pre><span></span><code><span class="o">=========================================================================================================</span>
-<span class="w">                                            </span><span class="n">coef</span><span class="w">    </span><span class="n">std</span><span class="w"> </span><span class="n">err</span><span class="w">          </span><span class="n">t</span><span class="w">      </span><span class="n">P</span><span class="o">&gt;|</span><span class="n">t</span><span class="o">|</span><span class="w">      </span><span class="p">[</span><span class="mf">0.025</span><span class="w">      </span><span class="mf">0.975</span><span class="p">]</span>
-<span class="o">---------------------------------------------------------------------------------------------------------</span>
-<span class="k">const</span><span class="w">                                    </span><span class="o">-</span><span class="mf">0.2044</span><span class="w">      </span><span class="mf">0.065</span><span class="w">     </span><span class="o">-</span><span class="mf">3.149</span><span class="w">      </span><span class="mf">0.007</span><span class="w">      </span><span class="o">-</span><span class="mf">0.343</span><span class="w">      </span><span class="o">-</span><span class="mf">0.066</span>
-<span class="n">category_Comfort</span><span class="o">-</span><span class="n">Temperature</span><span class="w">             </span><span class="o">-</span><span class="mf">0.0394</span><span class="w">      </span><span class="mf">0.251</span><span class="w">     </span><span class="o">-</span><span class="mf">0.157</span><span class="w">      </span><span class="mf">0.878</span><span class="w">      </span><span class="o">-</span><span class="mf">0.575</span><span class="w">       </span><span class="mf">0.496</span>
-<span class="n">category_Convenience</span><span class="w"> </span><span class="n">Facilities</span><span class="w">          </span><span class="o">-</span><span class="mf">0.1764</span><span class="w">      </span><span class="mf">0.251</span><span class="w">     </span><span class="o">-</span><span class="mf">0.702</span><span class="w">      </span><span class="mf">0.494</span><span class="w">      </span><span class="o">-</span><span class="mf">0.712</span><span class="w">       </span><span class="mf">0.359</span>
-<span class="n">category_Crowding</span><span class="w"> </span><span class="n">Management</span><span class="w">             </span><span class="o">-</span><span class="mf">0.0976</span><span class="w">      </span><span class="mf">0.251</span><span class="w">     </span><span class="o">-</span><span class="mf">0.388</span><span class="w">      </span><span class="mf">0.703</span><span class="w">      </span><span class="o">-</span><span class="mf">0.633</span><span class="w">       </span><span class="mf">0.438</span>
-<span class="n">category_Information</span><span class="w"> </span><span class="n">Services</span><span class="w">             </span><span class="mf">0.1361</span><span class="w">      </span><span class="mf">0.155</span><span class="w">      </span><span class="mf">0.881</span><span class="w">      </span><span class="mf">0.392</span><span class="w">      </span><span class="o">-</span><span class="mf">0.193</span><span class="w">       </span><span class="mf">0.465</span>
-<span class="n">category_Other</span><span class="w">                            </span><span class="mf">0.1223</span><span class="w">      </span><span class="mf">0.155</span><span class="w">      </span><span class="mf">0.792</span><span class="w">      </span><span class="mf">0.441</span><span class="w">      </span><span class="o">-</span><span class="mf">0.207</span><span class="w">       </span><span class="mf">0.452</span>
-<span class="n">category_Personnel</span><span class="w"> </span><span class="n">Services</span><span class="w">              </span><span class="o">-</span><span class="mf">0.2324</span><span class="w">      </span><span class="mf">0.184</span><span class="w">     </span><span class="o">-</span><span class="mf">1.266</span><span class="w">      </span><span class="mf">0.225</span><span class="w">      </span><span class="o">-</span><span class="mf">0.624</span><span class="w">       </span><span class="mf">0.159</span>
-<span class="n">category_Reliability</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">Frequency</span><span class="w">         </span><span class="o">-</span><span class="mf">0.0241</span><span class="w">      </span><span class="mf">0.118</span><span class="w">     </span><span class="o">-</span><span class="mf">0.204</span><span class="w">      </span><span class="mf">0.841</span><span class="w">      </span><span class="o">-</span><span class="mf">0.277</span><span class="w">       </span><span class="mf">0.228</span>
-<span class="n">category_Ticketing</span><span class="w"> </span><span class="n">Services</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">Pricing</span><span class="w">     </span><span class="mf">0.1071</span><span class="w">      </span><span class="mf">0.118</span><span class="w">      </span><span class="mf">0.904</span><span class="w">      </span><span class="mf">0.380</span><span class="w">      </span><span class="o">-</span><span class="mf">0.145</span><span class="w">       </span><span class="mf">0.360</span>
-<span class="o">=========================================================================================================</span>
-</code></pre></div>
-
-<p>The model yielded:
-- $R^2 = 0.2155$, indicating that approximately 21.55% of variation in net sentiment is explained by program categories
-- Adjusted $R^2 = -0.1507$, suggesting limited predictive power after accounting for the number of predictors
-- No category coefficients reached statistical significance at $\alpha = 0.05$, indicating that program-specific factors beyond category designation may play a more important role in determining passenger sentiment</p>
-<h2 id="4-discussion-and-implications">4. Discussion and Implications</h2>
-<h3 id="41-key-findings">4.1 Key Findings</h3>
-<ol>
 <li>
-<p><strong>Significant Variation Across Programs</strong>: The statistically significant ANOVA results ($F = 10.37, p &lt; 0.001$) confirm that service programs differ substantially in their impact on passenger sentiment. This indicates that program design and implementation are critical factors affecting passenger experience.</p>
+<p><strong>Social Media Bias</strong>: The sentiment analysis is based on social media feedback, which may not represent the entire passenger population.</p>
 </li>
 <li>
-<p><strong>Category Performance Patterns</strong>: The data reveals a systematic pattern wherein Ticketing Services &amp; Pricing and Information Services programs generally outperform other categories. This suggests that passengers particularly value improvements in payment convenience and information accessibility.</p>
+<p><strong>Confounding Factors</strong>: Other factors beyond the service programs may have influenced passenger sentiment during the study period.</p>
 </li>
 <li>
-<p><strong>Contextual Implementation Factors</strong>: The substantial variation within categories (as evidenced by both positive and negative exemplars in the Ticketing Services &amp; Pricing category) indicates that implementation quality and contextual factors may be more influential than the general program type.</p>
+<p><strong>Limited Control Groups</strong>: Without clear control groups, it's challenging to attribute changes solely to the service programs.</p>
 </li>
 <li>
-<p><strong>Limited Explanatory Power of Categories</strong>: The regression model's modest $R^2$ value (0.2155) suggests that program categories alone explain only a limited portion of sentiment variation. This finding underscores the importance of examining program-specific design elements beyond broad categorization.</p>
+<p><strong>Data Sparsity</strong>: Some programs had limited data points, especially in pre-intervention periods, which may affect the reliability of the analysis.</p>
+</li>
+<li>
+<p><strong>Sentiment Metric</strong>: The sentiment score used (Positive - Negative) is one of many possible metrics and may not capture nuanced feedback.</p>
 </li>
 </ol>
-<h3 id="42-theoretical-implications">4.2 Theoretical Implications</h3>
-<p>These findings contribute to service quality theory in public transportation by demonstrating empirically that:</p>
-<ol>
-<li>The relationship between service improvements and passenger satisfaction is not uniformly positive, but rather depends on specific implementation details</li>
-<li>Passenger sentiment may be influenced by complex interactions between program features, pre-existing expectations, and contextual factors</li>
-<li>Digital service enhancements (ticketing and information) appear particularly impactful in modern urban transit systems</li>
-</ol>
-<h3 id="43-policy-recommendations">4.3 Policy Recommendations</h3>
-<p>Based on the empirical findings, the following evidence-based recommendations are proposed:</p>
-<ol>
-<li>
-<p><strong>Prioritize High-Impact Programs</strong>: Allocate resources preferentially to program types demonstrating consistently positive sentiment scores, particularly those related to ticketing services and digital information systems.</p>
-</li>
-<li>
-<p><strong>Reevaluate Underperforming Initiatives</strong>: Conduct thorough reviews of programs with significantly negative sentiment scores to identify specific implementation issues that may be addressed through redesign.</p>
-</li>
-<li>
-<p><strong>Adopt Best Practices Within Categories</strong>: For categories with mixed performance (e.g., Reliability &amp; Frequency), identify and replicate the specific design elements from successful programs within the same category.</p>
-</li>
-<li>
-<p><strong>Develop Integrated Program Packages</strong>: Create comprehensive service improvement initiatives that combine elements from high-performing categories to maximize positive impact on passenger experience.</p>
-</li>
-<li>
-<p><strong>Implement Continuous Sentiment Monitoring</strong>: Establish ongoing sentiment analysis systems to track program performance over time and enable data-driven adjustments to service initiatives.</p>
-</li>
-</ol>
-<h2 id="5-conclusion">5. Conclusion</h2>
-<p>This research provides a methodologically rigorous analysis of the impact of Shenzhen Metro service programs on passenger experience through the lens of sentiment analysis. The findings reveal statistically significant differences in how various categories of service improvements affect passenger satisfaction, with notable outperformance by ticketing services and digital information systems.</p>
-<p>The study demonstrates that program impact is not determined solely by broad category, but rather by specific implementation details and contextual factors. The ANOVA and Tukey HSD tests confirm that differences between programs are statistically significant, while regression analysis suggests that more complex factors beyond category designation influence passenger sentiment.</p>
-<p>These findings have important implications for transit policy, suggesting that resource allocation should prioritize digital service improvements while simultaneously addressing implementation issues in underperforming categories. Future research should explore the specific design elements and contextual factors that contribute to program success or failure within each category.</p>
-<p>By providing empirical evidence on program effectiveness, this study establishes a foundation for evidence-based decision-making in urban transit service improvement initiatives, potentially enhancing the passenger experience and operational efficiency of public transportation systems.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>The analysis reveals varying impacts of service programs on passenger sentiment. Some programs showed statistically significant improvements, while others had neutral or potentially negative effects.</p>
+<p>The Interrupted Time Series analysis provides the most robust evidence of program impact by accounting for pre-existing trends and examining both immediate and longer-term changes in sentiment.</p>
+<p>Based on these findings, programs with significant positive impacts might be considered for expansion or replication, while those with negative impacts may need refinement or reconsideration.</p>
     <script>
     // Add a small script to fix image paths if needed
     document.addEventListener('DOMContentLoaded', function() {

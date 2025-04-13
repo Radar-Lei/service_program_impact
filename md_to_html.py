@@ -4,44 +4,52 @@ import re
 import markdown
 from pathlib import Path
 
-# Path to the Markdown file
-md_file = "service_program_impact_report.md"
-html_file = "service_program_impact_report.html"
-current_dir = Path.cwd()
-
-# Read the Markdown content
-with open(md_file, 'r', encoding='utf-8') as f:
-    md_content = f.read()
-
-# Process images to ensure correct paths
-def process_images_in_markdown(content):
-    # Function to replace image markdown with correct relative paths
-    def replace_image(match):
-        alt_text = match.group(1)
-        image_path = match.group(2)
-        return f"![{alt_text}]({image_path})"
+def convert_md_to_html(md_file="service_program_impact_report.md", html_file="service_program_impact_report.html"):
+    """
+    Convert Markdown file to HTML with styling
     
-    # Replace all image references
-    content = re.sub(r'!\[(.*?)\]\((.*?)\)', replace_image, content)
-    return content
+    Args:
+        md_file (str): Path to the markdown file
+        html_file (str): Path to output HTML file
+    
+    Returns:
+        bool: True if conversion was successful
+    """
+    current_dir = Path.cwd()
+    
+    # Read the Markdown content
+    with open(md_file, 'r', encoding='utf-8') as f:
+        md_content = f.read()
 
-# Pre-process markdown content
-md_content = process_images_in_markdown(md_content)
+    # Process images to ensure correct paths
+    def process_images_in_markdown(content):
+        # Function to replace image markdown with correct relative paths
+        def replace_image(match):
+            alt_text = match.group(1)
+            image_path = match.group(2)
+            return f"![{alt_text}]({image_path})"
+        
+        # Replace all image references
+        content = re.sub(r'!\[(.*?)\]\((.*?)\)', replace_image, content)
+        return content
 
-# Convert Markdown to HTML with extensions
-html_content = markdown.markdown(
-    md_content,
-    extensions=[
-        'markdown.extensions.tables',
-        'markdown.extensions.fenced_code',
-        'markdown.extensions.codehilite',
-        'markdown.extensions.extra',
-        'markdown.extensions.toc',
-    ]
-)
+    # Pre-process markdown content
+    md_content = process_images_in_markdown(md_content)
 
-# Add proper CSS for styling
-css_content = """
+    # Convert Markdown to HTML with extensions
+    html_content = markdown.markdown(
+        md_content,
+        extensions=[
+            'markdown.extensions.tables',
+            'markdown.extensions.fenced_code',
+            'markdown.extensions.codehilite',
+            'markdown.extensions.extra',
+            'markdown.extensions.toc',
+        ]
+    )
+
+    # Add proper CSS for styling
+    css_content = """
 /* Font settings */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap');
 
@@ -143,8 +151,8 @@ blockquote {
 }
 """
 
-# Add MathJax support for rendering LaTeX expressions
-mathjax_script = """
+    # Add MathJax support for rendering LaTeX expressions
+    mathjax_script = """
 <script type="text/javascript" id="MathJax-script" async
   src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
 </script>
@@ -164,8 +172,8 @@ mathjax_script = """
 </script>
 """
 
-# Create complete HTML file
-full_html = f"""
+    # Create complete HTML file
+    full_html = f"""
 <!DOCTYPE html>
 <html>
 <head>
@@ -195,13 +203,19 @@ full_html = f"""
 </html>
 """
 
-# Save complete HTML
-with open(html_file, 'w', encoding='utf-8') as f:
-    f.write(full_html)
+    # Save complete HTML
+    with open(html_file, 'w', encoding='utf-8') as f:
+        f.write(full_html)
 
-print(f"HTML file generated at {html_file}")
-print("\nTo convert to PDF:")
-print("1. Open the HTML file in a browser: Chrome or Safari")
-print("2. Use Print (Cmd+P or Ctrl+P)")
-print("3. Choose 'Save as PDF' as the destination")
-print("4. Click 'Save' to create your PDF file")
+    print(f"HTML file generated at {html_file}")
+    print("\nTo convert to PDF:")
+    print("1. Open the HTML file in a browser: Chrome or Safari")
+    print("2. Use Print (Cmd+P or Ctrl+P)")
+    print("3. Choose 'Save as PDF' as the destination")
+    print("4. Click 'Save' to create your PDF file")
+    
+    return True
+
+# If run as a script (not imported)
+if __name__ == "__main__":
+    convert_md_to_html()
