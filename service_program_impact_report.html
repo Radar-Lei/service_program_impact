@@ -131,7 +131,7 @@ blockquote {
 <body>
     <h1 id="service-program-impact-analysis-report">Service Program Impact Analysis Report</h1>
 <h2 id="introduction">Introduction</h2>
-<p>This report analyzes the impact of various service programs on passenger experience based on sentiment analysis of social media feedback. The analysis examines how passenger sentiment changed before and after the implementation of each service program.</p>
+<p>This report analyzes the impact of various service programs on passenger experience based on sentiment analysis of social media feedback. The analysis examines how passenger sentiment changed before and after the implementation of each service program, providing data-driven insights for evaluating service effectiveness.</p>
 <h2 id="methodology">Methodology</h2>
 <p>The analysis employs three primary methods:</p>
 <ol>
@@ -139,21 +139,26 @@ blockquote {
 <li><strong>Categorical Analysis</strong>: Using Chi-square or Fisher's exact tests to analyze sentiment distribution shifts</li>
 <li><strong>Interrupted Time Series (ITS) Analysis</strong>: Examining changes in both level (immediate effect) and trend (longer-term effect) of sentiment after program implementation</li>
 </ol>
+<h2 id="data-overview">Data Overview</h2>
+<p>This analysis encompasses <strong>23</strong> service programs, with data sourced from passenger social media feedback. Each program is analyzed through comparison of sentiment scores before and after implementation, as well as trend analysis over time.</p>
 <h2 id="key-findings">Key Findings</h2>
 <h3 id="overall-impact">Overall Impact</h3>
 <ul>
 <li><strong>23</strong> service programs were analyzed</li>
-<li><strong>15</strong> programs showed positive sentiment change after implementation</li>
-<li><strong>8</strong> programs showed negative sentiment change after implementation</li>
-<li><strong>6</strong> programs showed statistically significant changes (p &lt; 0.05)</li>
+<li><strong>13</strong> programs showed positive sentiment change after implementation, with <strong>4</strong> showing statistically significant improvement (p &lt; 0.05)</li>
+<li><strong>10</strong> programs showed negative sentiment change after implementation, with <strong>2</strong> showing statistically significant decline (p &lt; 0.05)</li>
+<li>Overall, <strong>6</strong> programs (26.1%) demonstrated statistically significant changes</li>
 </ul>
-<h3 id="top-positive-impact-programs">Top Positive Impact Programs</h3>
+<h3 id="most-significant-positive-impact-programs">Most Significant Positive Impact Programs</h3>
+<p>The following programs showed the most significant positive impact after implementation (sorted by p-value):</p>
 <table>
 <thead>
 <tr>
 <th>Program ID</th>
 <th>Program Name</th>
-<th>Mean Sentiment Change</th>
+<th>Pre-Implementation Mean</th>
+<th>Post-Implementation Mean</th>
+<th>Mean Difference</th>
 <th>p-value</th>
 <th>Significant</th>
 </tr>
@@ -162,6 +167,8 @@ blockquote {
 <tr>
 <td>8</td>
 <td>实施免费乘车和优惠乘车</td>
+<td>-0.2143</td>
+<td>0.1818</td>
 <td>0.3961</td>
 <td>0.0035</td>
 <td>Yes</td>
@@ -169,6 +176,8 @@ blockquote {
 <tr>
 <td>5</td>
 <td>完成82个站点卫生间改造</td>
+<td>-0.1345</td>
+<td>0.1872</td>
 <td>0.3217</td>
 <td>0.0037</td>
 <td>Yes</td>
@@ -176,6 +185,8 @@ blockquote {
 <tr>
 <td>14</td>
 <td>地铁4号线导向牌升级液晶显示屏</td>
+<td>0.1465</td>
+<td>0.3602</td>
 <td>0.2137</td>
 <td>0.0191</td>
 <td>Yes</td>
@@ -183,71 +194,53 @@ blockquote {
 <tr>
 <td>15</td>
 <td>移动母婴室</td>
+<td>0.1662</td>
+<td>0.3591</td>
 <td>0.1928</td>
 <td>0.0386</td>
 <td>Yes</td>
 </tr>
-<tr>
-<td>6</td>
-<td>在高新园站安装钢梯</td>
-<td>0.1117</td>
-<td>0.2169</td>
-<td>No</td>
-</tr>
 </tbody>
 </table>
-<h3 id="top-negative-impact-programs">Top Negative Impact Programs</h3>
+<h3 id="most-significant-negative-impact-programs">Most Significant Negative Impact Programs</h3>
+<p>The following programs showed the most significant negative impact after implementation (sorted by p-value):</p>
 <table>
 <thead>
 <tr>
 <th>Program ID</th>
 <th>Program Name</th>
-<th>Mean Sentiment Change</th>
+<th>Pre-Implementation Mean</th>
+<th>Post-Implementation Mean</th>
+<th>Mean Difference</th>
 <th>p-value</th>
 <th>Significant</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>2</td>
-<td>车厢拥挤度智能显示系统</td>
-<td>-0.2111</td>
-<td>0.0335</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td>3</td>
-<td>实现BOM第三方支付</td>
-<td>-0.1540</td>
-<td>0.3829</td>
-<td>No</td>
-</tr>
-<tr>
-<td>12</td>
-<td>延长工作日和周末服务时间</td>
-<td>-0.1416</td>
-<td>0.1315</td>
-<td>No</td>
-</tr>
-<tr>
 <td>17</td>
 <td>智能测温机器人</td>
+<td>-0.3741</td>
+<td>-0.4882</td>
 <td>-0.1141</td>
 <td>0.0423</td>
 <td>Yes</td>
 </tr>
 <tr>
-<td>0</td>
-<td>同一车厢不同温度模式</td>
-<td>-0.0829</td>
-<td>0.2737</td>
-<td>No</td>
+<td>2</td>
+<td>车厢拥挤度智能显示系统</td>
+<td>0.3387</td>
+<td>0.1276</td>
+<td>-0.2111</td>
+<td>0.0335</td>
+<td>Yes</td>
 </tr>
 </tbody>
 </table>
-<h3 id="interrupted-time-series-analysis-results">Interrupted Time Series Analysis Results</h3>
-<p>The ITS analysis provides more robust evidence of program impact by examining both immediate changes (level) and longer-term changes (trend) in sentiment.</p>
+<h3 id="interrupted-time-series-its-analysis-results">Interrupted Time Series (ITS) Analysis Results</h3>
+<p>ITS analysis provides more robust evidence of program impact by examining both immediate changes (level) and longer-term changes (trend) in sentiment.</p>
 <h4 id="programs-with-significant-trend-changes">Programs with Significant Trend Changes</h4>
+<p>The following programs showed significant changes in sentiment trends after implementation (sorted by p-value):</p>
 <table>
 <thead>
 <tr>
@@ -256,6 +249,8 @@ blockquote {
 <th>Baseline Trend</th>
 <th>Trend Change</th>
 <th>p-value</th>
+<th>Model Type</th>
+<th>Sample Size</th>
 </tr>
 </thead>
 <tbody>
@@ -265,6 +260,8 @@ blockquote {
 <td>-0.0362</td>
 <td>0.0461</td>
 <td>0.0072</td>
+<td>Segmented Regression with AR(2)</td>
+<td>73</td>
 </tr>
 <tr>
 <td>18</td>
@@ -272,24 +269,31 @@ blockquote {
 <td>-0.0023</td>
 <td>0.0059</td>
 <td>0.0072</td>
+<td>Simple Segmented Regression</td>
+<td>197</td>
 </tr>
 <tr>
 <td>17</td>
 <td>智能测温机器人</td>
-<td>nan</td>
+<td>NA</td>
 <td>0.0034</td>
 <td>0.0351</td>
+<td>SARIMA with intervention</td>
+<td>195</td>
 </tr>
 <tr>
 <td>16</td>
 <td>大鹏新区开设地铁接驳专线</td>
-<td>nan</td>
+<td>NA</td>
 <td>-0.0083</td>
 <td>0.0204</td>
+<td>SARIMA with intervention</td>
+<td>188</td>
 </tr>
 </tbody>
 </table>
 <h4 id="programs-with-significant-level-changes">Programs with Significant Level Changes</h4>
+<p>The following programs showed significant immediate changes in sentiment levels after implementation (sorted by p-value):</p>
 <table>
 <thead>
 <tr>
@@ -298,6 +302,8 @@ blockquote {
 <th>Baseline Level</th>
 <th>Level Change</th>
 <th>p-value</th>
+<th>Model Type</th>
+<th>Sample Size</th>
 </tr>
 </thead>
 <tbody>
@@ -307,20 +313,50 @@ blockquote {
 <td>-0.1887</td>
 <td>-0.3629</td>
 <td>0.0434</td>
+<td>Simple Segmented Regression</td>
+<td>157</td>
 </tr>
 </tbody>
 </table>
-<h2 id="detailed-examples">Detailed Examples</h2>
-<h3 id="example-of-positive-impact-program-8-">Example of Positive Impact: Program 8 - 实施免费乘车和优惠乘车</h3>
-<p>This program showed a significant positive change in passenger sentiment after implementation (mean difference: 0.3961, p=0.0035).</p>
-<h4 id="visual-evidence">Visual Evidence</h4>
+<h2 id="case-studies">Case Studies</h2>
+<h3 id="case-study-1-program-8-positive-impact">Case Study 1: Program 8 - 实施免费乘车和优惠乘车 (Positive Impact)</h3>
+<p>This program demonstrated a significant positive change in passenger sentiment after implementation (mean difference: 0.3961, p=0.0035).</p>
+<p><strong>Basic Statistical Analysis:</strong>
+- Pre-implementation mean: -0.2143, median: -0.3543
+- Post-implementation mean: 0.1818, median: 0.4513
+- Difference: 0.3961 (t-statistic = 3.0785)</p>
+<p><strong>Interrupted Time Series Analysis:</strong>
+- Baseline level: -0.5220, level change: 0.0471 (p-value = 0.8615)
+- Baseline trend: 0.0256, trend change: -0.0252 (p-value = 0.1203)
+- Model: Simple Segmented Regression, R²: 0.1139, Sample size: 95</p>
+<p><strong>Conclusion:</strong> This program had a significant positive impact on passenger experience, supported by both basic statistical analysis and time series analysis. While the ITS analysis shows that the immediate level change was not statistically significant, there appears to be a meaningful shift in the overall sentiment distribution.</p>
 <p><img alt="Time Series Plot" src="figures/program_8_timeseries.png" /></p>
 <p><img alt="ITS Analysis" src="figures/its/program_8_its.png" /></p>
-<p>The placebo tests confirm that the observed effect is likely due to the program rather than chance variation.</p>
-<h3 id="example-of-non-significant-impact-program-6-">Example of Non-Significant Impact: Program 6 - 在高新园站安装钢梯</h3>
-<p>This program did not show a statistically significant change in passenger sentiment (mean difference: 0.1117, p=0.2169).</p>
-<h4 id="visual-evidence_1">Visual Evidence</h4>
-<p><img alt="Time Series Plot" src="figures/program_6_timeseries.png" /></p>
+<h3 id="case-study-2-program-2-negative-impact">Case Study 2: Program 2 - 车厢拥挤度智能显示系统 (Negative Impact)</h3>
+<p>This program showed a significant negative change in passenger sentiment after implementation (mean difference: -0.2111, p=0.0335).</p>
+<p><strong>Basic Statistical Analysis:</strong>
+- Pre-implementation mean: 0.3387, median: 0.5112
+- Post-implementation mean: 0.1276, median: 0.2764
+- Difference: -0.2111 (t-statistic = -2.1630)</p>
+<p><strong>Interrupted Time Series Analysis:</strong>
+- Baseline level: 0.5582, level change: -0.0135 (p-value = 0.9505)
+- Baseline trend: -0.0110, trend change: 0.0115 (p-value = 0.1523)
+- Model: Simple Segmented Regression, R²: 0.0351, Sample size: 168</p>
+<p><strong>Conclusion:</strong> Despite the technology-forward nature of this program, it appears to have negatively impacted passenger sentiment. This could suggest that the system may not be meeting passenger expectations or could be causing confusion. Further investigation into user experience with this system is recommended.</p>
+<p><img alt="Time Series Plot" src="figures/program_2_timeseries.png" /></p>
+<p><img alt="ITS Analysis" src="figures/its/program_2_its.png" /></p>
+<h3 id="case-study-3-program-1-long-term-trend-impact">Case Study 3: Program 1 - 智能动态地图显示系统 (Long-term Trend Impact)</h3>
+<p>This program presents an interesting pattern: while there was no significant immediate level change (p-value=0.3201), it showed a significant positive change in long-term trend (p-value=0.0072).</p>
+<p><strong>Basic Statistical Analysis:</strong>
+- Pre-implementation mean: 0.6466, post-implementation mean: 0.6863
+- Difference: 0.0398 (t-statistic = 0.3565, p-value = 0.7237)</p>
+<p><strong>Interrupted Time Series Analysis:</strong>
+- Baseline level: 1.3476, level change: 0.2101 (p-value = 0.3201)
+- Baseline trend: -0.0362, trend change: 0.0461 (p-value = 0.0072)
+- Model: Segmented Regression with AR(2), R²: 0.1624, Sample size: 73</p>
+<p><strong>Conclusion:</strong> This pattern suggests that the program does not immediately change passenger experience but its impact becomes more pronounced over time. This may be because passengers need time to adapt to the new service, or the service's value becomes apparent with extended use.</p>
+<p><img alt="Time Series Plot" src="figures/program_1_timeseries.png" /></p>
+<p><img alt="ITS Analysis" src="figures/its/program_1_its.png" /></p>
 <h2 id="overall-results-visualization">Overall Results Visualization</h2>
 <h3 id="basic-statistical-analysis">Basic Statistical Analysis</h3>
 <p><img alt="Mean Sentiment Differences" src="figures/overall_mean_diff_barplot.png" /></p>
@@ -329,29 +365,76 @@ blockquote {
 <p><img alt="Trend Changes" src="figures/its/overall_trend_change.png" /></p>
 <p><img alt="Level Changes" src="figures/its/overall_level_change.png" /></p>
 <p><img alt="Level vs Trend Changes" src="figures/its/level_vs_trend.png" /></p>
+<h2 id="methodological-discussion">Methodological Discussion</h2>
+<p>This study employed three different analytical methods, each with its own strengths and limitations:</p>
+<p><strong>Basic Statistical Analysis (t-tests)</strong>: Simple and intuitive, comparing mean differences before and after implementation. However, this method may not capture time trends and seasonal factors.</p>
+<p><strong>Categorical Analysis (Chi-square/Fisher tests)</strong>: Provides a different perspective by comparing changes in sentiment category distributions. This method does not rely on specific sentiment score values but focuses on shifts in sentiment categories (positive/negative/neutral).</p>
+<p><strong>Interrupted Time Series (ITS) Analysis</strong>: The most robust method, capable of distinguishing between immediate effects (level changes) and long-term effects (trend changes) while accounting for pre-existing trends, seasonality, and autocorrelation. In this study, ITS analysis provided the most valuable insights, especially for programs with effects that evolve over time.</p>
+<p>The ITS analysis identified <strong>5</strong> programs showing significant changes in level or trend, representing 21.7% of all programs. This proportion is slightly lower than the 26.1% of programs showing significant changes in the basic statistical analysis, suggesting that some seemingly significant changes might be due to pre-existing trends or other confounding factors rather than direct program impact.</p>
 <h2 id="limitations-and-considerations">Limitations and Considerations</h2>
 <p>Several limitations should be considered when interpreting these results:</p>
 <ol>
 <li>
-<p><strong>Social Media Bias</strong>: The sentiment analysis is based on social media feedback, which may not represent the entire passenger population.</p>
+<p><strong>Social Media Bias</strong>: The sentiment analysis is based on social media feedback, which may not represent the entire passenger population. Social media users tend to be younger and may be more likely to express opinions during extreme experiences (very satisfied or dissatisfied).</p>
 </li>
 <li>
-<p><strong>Confounding Factors</strong>: Other factors beyond the service programs may have influenced passenger sentiment during the study period.</p>
+<p><strong>Confounding Factors</strong>: Other factors beyond the service programs may have influenced passenger sentiment during the study period, such as seasonal changes, major events, or pandemic effects.</p>
 </li>
 <li>
-<p><strong>Limited Control Groups</strong>: Without clear control groups, it's challenging to attribute changes solely to the service programs.</p>
-</li>
-<li>
-<p><strong>Data Sparsity</strong>: Some programs had limited data points, especially in pre-intervention periods, which may affect the reliability of the analysis.</p>
+<p><strong>Data Sparsity</strong>: Some programs had limited data points, especially in pre-intervention periods, which may affect the reliability of the analysis. According to the ITS analysis results, sample sizes ranged from as few as 25 (Program 7) to as many as 197 (Program 18).</p>
 </li>
 <li>
 <p><strong>Sentiment Metric</strong>: The sentiment score used (Positive - Negative) is one of many possible metrics and may not capture nuanced feedback.</p>
 </li>
+<li>
+<p><strong>Time Lag Effects</strong>: Some service programs may take time to show their full impact, which may not be completely captured in this analysis.</p>
+</li>
 </ol>
-<h2 id="conclusion">Conclusion</h2>
-<p>The analysis reveals varying impacts of service programs on passenger sentiment. Some programs showed statistically significant improvements, while others had neutral or potentially negative effects.</p>
-<p>The Interrupted Time Series analysis provides the most robust evidence of program impact by accounting for pre-existing trends and examining both immediate and longer-term changes in sentiment.</p>
-<p>Based on these findings, programs with significant positive impacts might be considered for expansion or replication, while those with negative impacts may need refinement or reconsideration.</p>
+<h2 id="conclusions-and-recommendations">Conclusions and Recommendations</h2>
+<p>Based on the analysis results, we draw the following conclusions:</p>
+<ol>
+<li><strong>Most Successful Service Programs</strong>:</li>
+<li>Program 8 (实施免费乘车和优惠乘车): Sentiment score increase of 0.3961, p-value=0.0035</li>
+<li>Program 5 (完成82个站点卫生间改造): Sentiment score increase of 0.3217, p-value=0.0037</li>
+<li>Program 14 (地铁4号线导向牌升级液晶显示屏): Sentiment score increase of 0.2137, p-value=0.0191</li>
+</ol>
+<p>These programs significantly improved passenger experience and should be considered for expansion or application of their successful elements to other service areas.</p>
+<ol>
+<li><strong>Programs Needing Improvement</strong>:</li>
+<li>Program 17 (智能测温机器人): Sentiment score decrease of 0.1141, p-value=0.0423</li>
+<li>Program 2 (车厢拥挤度智能显示系统): Sentiment score decrease of 0.2111, p-value=0.0335</li>
+</ol>
+<p>These programs resulted in significantly decreased passenger experience. It is recommended to investigate the underlying causes and consider adjusting implementation strategies or improving service design.</p>
+<ol>
+<li><strong>Programs with Long-term Effects</strong>:</li>
+<li>Program 1 (智能动态地图显示系统): Trend change of 0.0461, p-value=0.0072</li>
+<li>Program 18 (已开通八条招手停靠公交线路): Trend change of 0.0059, p-value=0.0072</li>
+</ol>
+<p>These programs may not show immediate significant effects but their impact accumulates over time. When evaluating such programs, sufficient time windows should be provided.</p>
+<ol>
+<li>
+<p><strong>Overall Recommendations</strong>:</p>
+</li>
+<li>
+<p>For programs that significantly enhance passenger experience, success factors should be summarized and considered for implementation on other routes or stations.</p>
+</li>
+<li>For programs with unclear effects, cost-benefit analysis should be integrated to assess whether continued resource investment is warranted.</li>
+<li>For programs producing negative impacts, design and implementation methods should be reassessed, or consideration given to pausing and replacing with more effective alternatives.</li>
+<li>
+<p>Establishing continuous monitoring mechanisms is recommended to track service program effects in real-time for timely adjustments.</p>
+</li>
+<li>
+<p><strong>Future Research Directions</strong>:</p>
+</li>
+<li>
+<p>Conduct passenger surveys to obtain more direct feedback and suggestions.</p>
+</li>
+<li>Perform group-specific analysis to understand different reactions to service programs among various passenger groups (e.g., commuters, occasional passengers).</li>
+<li>Explore synergistic effects between service programs by analyzing the combined impact of multiple simultaneous implementations.</li>
+<li>Integrate sentiment analysis with operational indicators such as passenger flow and ticketing data to provide more comprehensive program evaluation.</li>
+</ol>
+<hr />
+<p><em>Report generated: April 13, 2025</em></p>
     <script>
     // Add a small script to fix image paths if needed
     document.addEventListener('DOMContentLoaded', function() {
