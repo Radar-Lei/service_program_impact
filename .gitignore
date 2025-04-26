@@ -31,3 +31,4 @@ results/
 processed_data/
 *.pyc
 Related Papers/
+*.csv
