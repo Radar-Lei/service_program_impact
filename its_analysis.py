@@ -24,8 +24,16 @@ else:  # Windows or other systems
 # Universal settings
 plt.rcParams['axes.unicode_minus'] = False  # For displaying negative signs properly
 
-def run_its_analysis(processed_dir='processed_data'):
-    """Run Interrupted Time Series (ITS) analysis for each service program"""
+def run_its_analysis(program_ids=None, processed_dir='processed_data'):
+    """Run Interrupted Time Series (ITS) analysis for each service program
+    
+    Args:
+        program_ids (list, optional): 要分析的服务项目ID列表。如果为None，则分析所有项目。
+        processed_dir (str, optional): 处理后数据的目录路径。默认为'processed_data'。
+    
+    Returns:
+        DataFrame: ITS分析结果摘要数据框
+    """
     print("Starting Interrupted Time Series (ITS) analysis...")
     
     # Create results directory if it doesn't exist
@@ -35,7 +43,15 @@ def run_its_analysis(processed_dir='processed_data'):
             os.makedirs(dir_name)
     
     # Get all weekly data files
-    weekly_files = glob.glob(f'{processed_dir}/program_*_weekly.csv')
+    if program_ids is not None:
+        # 只获取指定项目的文件
+        weekly_files = [f'{processed_dir}/program_{pid}_weekly.csv' for pid in program_ids 
+                        if os.path.exists(f'{processed_dir}/program_{pid}_weekly.csv')]
+        if not weekly_files:
+            print("Warning: No weekly data files found for the specified program IDs")
+    else:
+        # 获取所有项目的文件
+        weekly_files = glob.glob(f'{processed_dir}/program_*_weekly.csv')
     
     # Create summary dataframe for all ITS results
     its_summary = pd.DataFrame(columns=[
@@ -44,6 +60,11 @@ def run_its_analysis(processed_dir='processed_data'):
         'significant_level_0.05', 'significant_trend_0.05', 'model_type',
         'r_squared', 'aic', 'sample_size'
     ])
+    
+    # 如果没有找到任何文件，提前返回空的摘要结果
+    if not weekly_files:
+        print("No weekly data files found for ITS analysis")
+        return its_summary
     
     for file_path in weekly_files:
         # Extract program ID from filename

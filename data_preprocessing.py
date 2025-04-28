@@ -41,8 +41,16 @@ def calculate_sentiment_score(row):
     """Calculate sentiment score (Positive - Negative)"""
     return row['Positive'] - row['Negative']
 
-def preprocess_data():
-    """Preprocess service program data and social media feedback data"""
+def preprocess_data(feedback_dir, program_ids=None):
+    """Preprocess service program data and social media feedback data
+    
+    Args:
+        feedback_dir (str): 反馈数据目录路径
+        program_ids (list, optional): 要分析的服务项目ID列表。如果为None，则分析所有项目。
+    
+    Returns:
+        DataFrame: 有效的服务项目数据框
+    """
     print("Starting data preprocessing...")
     
     # 1. Load service program data
@@ -52,11 +60,19 @@ def preprocess_data():
     # Filter valid service programs (with intervention date)
     valid_programs = program_df[program_df['intervention_date'].notna()].copy()
     
+    # Filter by program IDs if specified
+    if program_ids is not None:
+        valid_programs = valid_programs.loc[program_ids]
+        if valid_programs.empty:
+            print(f"Warning: None of the specified program IDs {program_ids} are valid.")
+            return valid_programs
+    
     # Print service program information
-    print(f"Found {len(valid_programs)} valid service programs")
+    print(f"Found {len(valid_programs)} valid service programs to analyze")
+    for i, program in valid_programs.iterrows():
+        print(f"  - Program {i}: {program['Service improvement programs']}")
     
     # Feedback directory
-    feedback_dir = 'similarity_threshold=0.35/'
     
     # 2. Process feedback data for each valid service program
     all_weekly_data = []

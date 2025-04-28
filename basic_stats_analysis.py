@@ -28,8 +28,16 @@ def load_program_data():
     program_df = pd.read_csv('service_program_data/SPD_SZ_zh.csv')
     return program_df
 
-def analyze_program_stats(processed_dir='processed_data'):
-    """Perform basic statistical analysis for each service program"""
+def analyze_program_stats(program_ids=None, processed_dir='processed_data'):
+    """Perform basic statistical analysis for each service program
+    
+    Args:
+        program_ids (list, optional): 要分析的服务项目ID列表。如果为None，则分析所有项目。
+        processed_dir (str, optional): 处理后数据的目录路径。默认为'processed_data'。
+    
+    Returns:
+        DataFrame: 分析结果摘要数据框
+    """
     print("Performing basic statistical analysis...")
     
     # Create results directory if it doesn't exist
@@ -37,7 +45,15 @@ def analyze_program_stats(processed_dir='processed_data'):
         os.makedirs('results')
     
     # Get all weekly data files
-    weekly_files = glob.glob(f'{processed_dir}/program_*_weekly.csv')
+    if program_ids is not None:
+        # 只获取指定项目的文件
+        weekly_files = [f'{processed_dir}/program_{pid}_weekly.csv' for pid in program_ids 
+                        if os.path.exists(f'{processed_dir}/program_{pid}_weekly.csv')]
+        if not weekly_files:
+            print("Warning: No weekly data files found for the specified program IDs")
+    else:
+        # 获取所有项目的文件
+        weekly_files = glob.glob(f'{processed_dir}/program_*_weekly.csv')
     
     # Create summary dataframe for all program results
     summary_results = pd.DataFrame(columns=[
@@ -45,6 +61,11 @@ def analyze_program_stats(processed_dir='processed_data'):
         'pre_median', 'post_median', 'median_diff', 
         'pre_std', 'post_std', 't_stat', 'p_value', 'significant_0.05'
     ])
+    
+    # 如果没有找到任何文件，提前返回空的摘要结果
+    if not weekly_files:
+        print("No weekly data files found for analysis")
+        return summary_results
     
     for file_path in weekly_files:
         # Extract program ID from filename
