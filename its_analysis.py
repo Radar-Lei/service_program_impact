@@ -13,6 +13,7 @@ warnings.filterwarnings('ignore')
 # Setup for Chinese font display
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+import matplotlib.dates as mdates
 import platform
 
 # Check if on macOS
@@ -360,6 +361,29 @@ def create_its_visualization(df, model, model_name, program_id, program_name):
         time_points = clean_df['time']
         observed = clean_df['mean_sentiment']
         
+        # Check if a timestamp column exists in the dataframe
+        timestamp_col = None
+        for col in df.columns:
+            if col.lower() in ['timestamp', 'timestamps', 'date', 'datetime']:
+                timestamp_col = col
+                break
+        
+        # If timestamp column exists, use it for plotting
+        if timestamp_col and timestamp_col in df.columns and not df[timestamp_col].isna().all():
+            time_points_display = pd.to_datetime(df[timestamp_col]).dropna()
+            if len(time_points_display) == len(time_points):
+                time_points = time_points_display
+                plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+                plt.xticks(rotation=45)
+        elif 'week' in df.columns:
+            time_points_display = [pd.to_datetime(w.split('/')[0]) for w in df['week'] if isinstance(w, str)]
+            if len(time_points_display) == len(time_points):
+                time_points = time_points_display
+                plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+                plt.xticks(rotation=45)
+        else:
+            time_points_display = time_points
+        
         # Get predicted values
         if hasattr(model, 'fittedvalues'):
             predicted = model.fittedvalues
@@ -370,6 +394,7 @@ def create_its_visualization(df, model, model_name, program_id, program_name):
                 # This is a simple approach - in a real app we would need more sophisticated alignment
                 idx_range = min(len(time_points), len(predicted))
                 time_points = time_points[:idx_range]
+                time_points_display = time_points_display[:idx_range] if isinstance(time_points_display, pd.Series) else time_points_display[:idx_range]
                 observed = observed[:idx_range]
                 predicted = predicted[:idx_range]
         else:
@@ -380,6 +405,7 @@ def create_its_visualization(df, model, model_name, program_id, program_name):
                 if len(predicted) != len(time_points):
                     idx_range = min(len(time_points), len(predicted))
                     time_points = time_points[:idx_range]
+                    time_points_display = time_points_display[:idx_range] if isinstance(time_points_display, pd.Series) else time_points_display[:idx_range]
                     observed = observed[:idx_range]
                     predicted = predicted[:idx_range]
             except Exception as e:
@@ -389,19 +415,27 @@ def create_its_visualization(df, model, model_name, program_id, program_name):
         # Find the intervention point
         intervention_idx = clean_df['post_intervention'].idxmax() if 1 in clean_df['post_intervention'].values else None
         intervention_time = clean_df.loc[intervention_idx, 'time'] if intervention_idx is not None else None
+        intervention_time_display = intervention_time
+        if intervention_idx is not None:
+            if timestamp_col and timestamp_col in df.columns and not df[timestamp_col].isna().all():
+                if intervention_idx < len(df) and not pd.isna(df.loc[intervention_idx, timestamp_col]):
+                    intervention_time_display = pd.to_datetime(df.loc[intervention_idx, timestamp_col])
+            elif 'week' in df.columns and intervention_idx < len(df):
+                if isinstance(df.loc[intervention_idx, 'week'], str):
+                    intervention_time_display = pd.to_datetime(df.loc[intervention_idx, 'week'].split('/')[0])
         
         # Create figure
         plt.figure(figsize=(12, 8))
         
         # Plot observed values
-        plt.scatter(time_points, observed, color='blue', alpha=0.6, label='Observed')
+        plt.scatter(time_points_display, observed, color='blue', alpha=0.6, label='Observed')
         
         # Plot fitted values
-        plt.plot(time_points, predicted, 'r-', linewidth=2, label='Fitted')
+        plt.plot(time_points_display, predicted, 'r-', linewidth=2, label='Fitted')
         
         # Add vertical line at intervention
-        if intervention_time is not None:
-            plt.axvline(x=intervention_time, color='green', linestyle='--', 
+        if intervention_time_display is not None:
+            plt.axvline(x=intervention_time_display, color='green', linestyle='--', 
                        label='Intervention Point')
         
         # Add trend lines (pre and post)
@@ -417,9 +451,9 @@ def create_its_visualization(df, model, model_name, program_id, program_name):
                 pre_mask = clean_df['post_intervention'].iloc[:len(time_points)] == 0
                 post_mask = clean_df['post_intervention'].iloc[:len(time_points)] == 1
                 
-                plt.plot(time_points[pre_mask], pre_trend[pre_mask], 'b--', linewidth=1, 
+                plt.plot(time_points_display[pre_mask], pre_trend[pre_mask], 'b--', linewidth=1, 
                         label='Pre-intervention trend')
-                plt.plot(time_points[post_mask], post_trend[post_mask], 'g--', linewidth=1,
+                plt.plot(time_points_display[post_mask], post_trend[post_mask], 'g--', linewidth=1,
                         label='Post-intervention trend')
             except Exception as e:
                 print(f"Warning: Could not plot trend lines: {str(e)}")
@@ -429,7 +463,7 @@ def create_its_visualization(df, model, model_name, program_id, program_name):
     
     # Add labels and title
     plt.title(f'Program {program_id}: {program_name} - ITS Analysis\nModel: {model_name}')
-    plt.xlabel('Time')
+    plt.xlabel('日期' if timestamp_col else '时间')
     plt.ylabel('Mean Sentiment Score')
     plt.legend()
     plt.grid(True, alpha=0.3)
@@ -460,8 +494,23 @@ def run_placebo_test(df, program_id, program_name, num_placebos=3):
             return []
         
         # Select placebo intervention points (at 25%, 50%, 75% of pre-intervention period)
-        placebo_idxs = [int(len(pre_data) * p) for p in [0.25, 0.5, 0.75]]
+        placebo_idxs = [int(len(pre_data) * p) for p in [0.25]]
         placebo_p_values = []
+        
+        # Check if a timestamp column exists in the dataframe
+        timestamp_col = None
+        for col in df.columns:
+            if col.lower() in ['timestamp', 'timestamps', 'date', 'datetime']:
+                timestamp_col = col
+                break
+        
+        # If timestamp column exists, use it for plotting
+        time_points_display = clean_df['time']
+        if timestamp_col and timestamp_col in df.columns and not df[timestamp_col].isna().all():
+            time_points_display = pd.to_datetime(df[timestamp_col]).dropna()
+            if len(time_points_display) == len(clean_df['time']):
+                plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+                plt.xticks(rotation=45)
         
         # Create figure for placebo comparisons
         plt.figure(figsize=(12, 8))
@@ -472,8 +521,9 @@ def run_placebo_test(df, program_id, program_name, num_placebos=3):
             actual_trend_p = actual_model.pvalues['time_since_intervention']
             
             # Plot actual data and intervention
-            plt.scatter(clean_df['time'], clean_df['mean_sentiment'], color='blue', alpha=0.3, label='Observed data')
-            plt.axvline(x=clean_df.loc[actual_idx, 'time'], color='red', linestyle='-', 
+            plt.scatter(time_points_display, clean_df['mean_sentiment'], color='blue', alpha=0.3, label='Observed data')
+            actual_time_display = time_points_display.iloc[actual_idx] if isinstance(time_points_display, pd.Series) else clean_df.loc[actual_idx, 'time']
+            plt.axvline(x=actual_time_display, color='red', linestyle='-', 
                        linewidth=2, label='Actual intervention')
             
             # Run analysis with each placebo point
@@ -495,7 +545,8 @@ def run_placebo_test(df, program_id, program_name, num_placebos=3):
                     placebo_p_values.append(placebo_p)
                     
                     # Plot placebo intervention line
-                    plt.axvline(x=placebo_time, color='gray', linestyle='--', alpha=0.7,
+                    placebo_time_display = time_points_display.iloc[idx] if isinstance(time_points_display, pd.Series) else placebo_time
+                    plt.axvline(x=placebo_time_display, color='gray', linestyle='--', alpha=0.7,
                                label=f'Placebo {i+1} (p={placebo_p:.4f})')
                     
                 except Exception as e:
@@ -509,7 +560,7 @@ def run_placebo_test(df, program_id, program_name, num_placebos=3):
     
     # Add legend and labels
     plt.title(f'Program {program_id}: {program_name} - Placebo Test\nActual p-value: {actual_trend_p:.4f}')
-    plt.xlabel('Time')
+    plt.xlabel('日期' if timestamp_col else '时间')
     plt.ylabel('Mean Sentiment Score')
     plt.legend()
     plt.grid(True, alpha=0.3)

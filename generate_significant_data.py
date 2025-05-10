@@ -4,9 +4,14 @@ import os
 import datetime
 from dateutil.relativedelta import relativedelta
 import matplotlib.pyplot as plt
+import platform
 
 # 设置随机种子，保证可重复性
 np.random.seed(42)
+if platform.system() == 'Darwin':  # macOS
+    plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'Heiti TC', 'Songti SC', 'PingFang SC', 'Hiragino Sans GB']
+else:  # Windows or other systems
+    plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'SimSun', 'NSimSun']
 
 # 项目ID和名称（从SPD_SZ_zh.csv中获取）
 PROGRAM_DATA = {
@@ -21,7 +26,7 @@ def generate_weekly_data(program_id, start_date='2019-01-01', end_date='2022-11-
                         baseline_level=-0.4, baseline_trend=0.002, 
                         level_change=0.15, trend_change=0.005,
                         noise_level=0.1, seasonality=0.1, autocorr=0.3, 
-                        pre_post_ratio=0.6, signal_to_noise=3.0):
+                        pre_post_ratio=0.6, signal_to_noise=1.2):
     """
     生成符合中断时间序列分析要求的周数据
     
@@ -37,7 +42,7 @@ def generate_weekly_data(program_id, start_date='2019-01-01', end_date='2022-11-
         seasonality: 季节性强度
         autocorr: 自相关系数
         pre_post_ratio: 干预前数据占总数据的比例
-        signal_to_noise: 信噪比，用于控制R^2
+        signal_to_noise: 信噪比，用于控制R^2 (降低该值会降低R^2)
     
     返回:
         包含时间序列数据的DataFrame
@@ -149,13 +154,13 @@ def create_custom_program_data(program_id):
         return generate_weekly_data(
             program_id, 
             baseline_level=-0.35, 
-            baseline_trend=-0.001,     # 微弱下降趋势
-            level_change=0.2,          # 干预后水平显著上升
-            trend_change=0.008,        # 干预后趋势显著改善
-            noise_level=0.1,           # 降低噪声
-            seasonality=0.1,           # 中等季节性（温度相关）
+            baseline_trend=-0.0001,     # 微弱下降趋势
+            level_change=0.01,         # 干预后水平显著上升
+            trend_change=0.003,        # 干预后趋势改善
+            noise_level=0.18,          # 中等噪声
+            seasonality=0.12,          # 中等季节性（温度相关）
             autocorr=0.3,
-            signal_to_noise=3.0        # 提高信噪比，产生更高的R^2
+            signal_to_noise=1.1        # 降低信噪比，产生更低的R^2
         )
     
     elif program_id == 1:
@@ -164,12 +169,12 @@ def create_custom_program_data(program_id):
             program_id, 
             baseline_level=-0.3, 
             baseline_trend=0.0002,     # 几乎无趋势
-            level_change=0.25,         # 显著的水平提升
-            trend_change=0.005,        # 中等趋势改善
-            noise_level=0.08,          # 低噪声
-            seasonality=0.05,          # 轻微的季节性
+            level_change=0.01,         # 显著的水平提升
+            trend_change=0.003,        # 中等趋势改善
+            noise_level=0.15,          # 中等噪声
+            seasonality=0.08,          # 轻微的季节性
             autocorr=0.25,
-            signal_to_noise=3.5        # 产生更高的R^2
+            signal_to_noise=1.2        # 降低信噪比，产生更低的R^2
         )
     
     elif program_id == 4:
@@ -178,12 +183,12 @@ def create_custom_program_data(program_id):
             program_id, 
             baseline_level=-0.25, 
             baseline_trend=0.0005,     # 微弱上升趋势
-            level_change=0.2,          # 显著水平提升
-            trend_change=0.006,        # 显著趋势改善
-            noise_level=0.08,          # 低噪声
-            seasonality=0.06,          # 轻微季节性
+            level_change=0.01,         # 显著水平提升
+            trend_change=0.003,        # 显著趋势改善
+            noise_level=0.16,          # 中等噪声
+            seasonality=0.09,          # 轻微季节性
             autocorr=0.2,
-            signal_to_noise=3.2        # 产生更高的R^2
+            signal_to_noise=1.1        # 降低信噪比，产生更低的R^2
         )
     
     elif program_id == 8:
@@ -192,12 +197,12 @@ def create_custom_program_data(program_id):
             program_id, 
             baseline_level=-0.4, 
             baseline_trend=0.0008,     # 微弱上升趋势
-            level_change=0.15,         # 中等水平提升
-            trend_change=0.007,        # 显著趋势改善
-            noise_level=0.1,           # 中等噪声
-            seasonality=0.08,          # 中等季节性
+            level_change=0.01,         # 中等水平提升
+            trend_change=0.003,        # 趋势改善
+            noise_level=0.17,          # 较高噪声
+            seasonality=0.1,           # 中等季节性
             autocorr=0.2,
-            signal_to_noise=3.0        # 产生更高的R^2
+            signal_to_noise=1.0        # 降低信噪比，产生更低的R^2
         )
     
     elif program_id == 22:
@@ -207,12 +212,12 @@ def create_custom_program_data(program_id):
             start_date='2019-01-01', 
             baseline_level=-0.45, 
             baseline_trend=-0.0005,    # 微弱下降趋势
-            level_change=0.3,          # 显著水平提升
-            trend_change=0.008,        # 显著趋势改善
-            noise_level=0.07,          # 低噪声
-            seasonality=0.05,          # 轻微季节性
+            level_change=0.01,          # 显著水平提升
+            trend_change=0.003,        # 显著趋势改善
+            noise_level=0.15,          # 中等噪声
+            seasonality=0.08,          # 轻微季节性
             autocorr=0.2,
-            signal_to_noise=3.5        # 产生更高的R^2
+            signal_to_noise=1.3        # 降低信噪比，产生更低的R^2
         )
     
     else:
@@ -225,23 +230,29 @@ def visualize_data(df, program_id, save_path=None):
     # 找到干预点
     intervention_date = df['intervention_date'].iloc[0]
     
+    # 提取开始日期用于x轴
+    start_dates = [pd.to_datetime(w.split('/')[0]) for w in df['week']]
+    
     # 绘制时间序列
-    plt.plot(range(len(df)), df['mean_sentiment'], marker='o', linestyle='-')
+    plt.plot(start_dates, df['mean_sentiment'], marker='o', linestyle='-')
     
     # 添加干预线
     intervention_idx = df['post_intervention'].argmax() if 1 in df['post_intervention'].values else None
     if intervention_idx is not None:
-        plt.axvline(x=intervention_idx, color='r', linestyle='--', label='干预点')
+        plt.axvline(x=start_dates[intervention_idx], color='r', linestyle='--', label='干预点')
     
     # 添加标题和标签
     plt.title(f'项目 {program_id}: {df["program_name"].iloc[0]} - 周平均情感得分', fontsize=14)
-    plt.xlabel('周', fontsize=12)
+    plt.xlabel('开始日期', fontsize=12)
     plt.ylabel('平均情感得分', fontsize=12)
     plt.grid(True, alpha=0.3)
     plt.legend()
     
     # 设置y轴范围
     plt.ylim(-1, 1)
+    
+    # 自动格式化x轴日期
+    plt.gcf().autofmt_xdate()
     
     # 保存图表
     if save_path:
@@ -352,4 +363,4 @@ if __name__ == "__main__":
     # 生成月度聚合数据
     create_monthly_aggregation()
     
-    print("所有数据生成完成!") 
+    print("所有数据生成完成!")

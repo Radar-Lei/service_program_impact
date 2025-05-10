@@ -12,6 +12,7 @@ warnings.filterwarnings('ignore')
 # Setup for Chinese font display
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+import matplotlib.dates as mdates
 import platform
 
 # Check if on macOS
@@ -255,15 +256,48 @@ def create_program_visualizations(df, program_id, program_name):
     
     # Time series plot with intervention point
     plt.figure(figsize=(12, 6))
-    plt.plot(df['time'], df['mean_sentiment'], marker='o', linestyle='-')
+    
+    # Check if a timestamp column exists in the dataframe
+    timestamp_col = None
+    for col in df.columns:
+        if col.lower() in ['timestamp', 'timestamps', 'date', 'datetime']:
+            timestamp_col = col
+            break
+    
+    # If timestamp column exists, use it for plotting
+    if timestamp_col and timestamp_col in df.columns and not df[timestamp_col].isna().all():
+        time_points = pd.to_datetime(df[timestamp_col]).dropna()
+        if len(time_points) == len(df['mean_sentiment']):
+            plt.plot(time_points, df['mean_sentiment'], marker='o', linestyle='-')
+            plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+            plt.xticks(rotation=45)
+        else:
+            plt.plot(df['time'], df['mean_sentiment'], marker='o', linestyle='-')
+    elif 'week' in df.columns:
+        time_points = [pd.to_datetime(w.split('/')[0]) for w in df['week'] if isinstance(w, str)]
+        if len(time_points) == len(df['mean_sentiment']):
+            plt.plot(time_points, df['mean_sentiment'], marker='o', linestyle='-')
+            plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+            plt.xticks(rotation=45)
+        else:
+            plt.plot(df['time'], df['mean_sentiment'], marker='o', linestyle='-')
+    else:
+        plt.plot(df['time'], df['mean_sentiment'], marker='o', linestyle='-')
     
     # Find intervention point
     intervention_idx = df['post_intervention'].idxmax() if 1 in df['post_intervention'].values else None
     if intervention_idx is not None:
-        plt.axvline(x=df.loc[intervention_idx, 'time'], color='r', linestyle='--', label='Intervention Point')
+        if timestamp_col and timestamp_col in df.columns and not df[timestamp_col].isna().all():
+            intervention_time = pd.to_datetime(df.loc[intervention_idx, timestamp_col]) if not pd.isna(df.loc[intervention_idx, timestamp_col]) else df.loc[intervention_idx, 'time']
+            plt.axvline(x=intervention_time, color='r', linestyle='--', label='Intervention Point')
+        elif 'week' in df.columns:
+            intervention_time = pd.to_datetime(df.loc[intervention_idx, 'week'].split('/')[0]) if isinstance(df.loc[intervention_idx, 'week'], str) else df.loc[intervention_idx, 'time']
+            plt.axvline(x=intervention_time, color='r', linestyle='--', label='Intervention Point')
+        else:
+            plt.axvline(x=df.loc[intervention_idx, 'time'], color='r', linestyle='--', label='Intervention Point')
     
     plt.title(f'Program {program_id}: {program_name} - Sentiment Score Over Time')
-    plt.xlabel('Time Point')
+    plt.xlabel('日期' if (timestamp_col or 'week' in df.columns) else '时间点')
     plt.ylabel('Mean Sentiment Score')
     plt.legend()
     plt.grid(True, alpha=0.3)
