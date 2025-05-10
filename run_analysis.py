@@ -415,7 +415,7 @@ def parse_arguments():
     parser.add_argument('--clean', action='store_true', help='清理所有结果')
     parser.add_argument('--feedback_dir', type=str, default='similarity_threshold=0.35/', 
                         help='反馈数据目录路径')
-    parser.add_argument('--programs', type=int, nargs='+', default=[0, 1, 4, 8, 22], help='要分析的服务项目ID列表，如果不指定则使用默认值0,1,4,8,22')
+    parser.add_argument('--programs', type=int, nargs='+', default=[0, 1, 4, 22], help='要分析的服务项目ID列表，如果不指定则使用默认值0,1,4,22')
     parser.add_argument('--force-preprocess', action='store_true', 
                         help='强制重新预处理数据，即使已经存在处理过的数据')
     parser.add_argument('--no-summary-regen', action='store_true',

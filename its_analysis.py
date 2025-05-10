@@ -109,9 +109,6 @@ def run_its_analysis(program_ids=None, processed_dir='processed_data'):
     # Save summary results
     its_summary.to_csv('results/its/its_summary.csv', index=False)
     
-    # Create overall visualization of ITS results
-    create_overall_its_visualization(its_summary)
-    
     print("ITS analysis completed")
     return its_summary
 
@@ -349,7 +346,7 @@ def fit_arima_model(df, order=(1,0,0), seasonal_order=None):
 def create_its_visualization(df, model, model_name, program_id, program_name):
     """Create visualization for ITS analysis results"""
     try:
-        # First ensure we have complete data for visualization
+        # 首先确保有完整的可视化数据
         required_cols = ['mean_sentiment', 'time', 'post_intervention', 'time_since_intervention']
         clean_df = df[required_cols].dropna().reset_index(drop=True)
         
@@ -357,121 +354,167 @@ def create_its_visualization(df, model, model_name, program_id, program_name):
             print(f"Warning: Insufficient data for visualization for program {program_id}")
             return
         
-        # Get observed values
-        time_points = clean_df['time']
+        # 获取观察值
+        time_points = np.array(clean_df['time'])
         observed = clean_df['mean_sentiment']
         
-        # Check if a timestamp column exists in the dataframe
+        # 检查时间戳列用于显示目的
         timestamp_col = None
         for col in df.columns:
             if col.lower() in ['timestamp', 'timestamps', 'date', 'datetime']:
                 timestamp_col = col
                 break
         
-        # If timestamp column exists, use it for plotting
+        # 准备用于显示的时间点
         if timestamp_col and timestamp_col in df.columns and not df[timestamp_col].isna().all():
             time_points_display = pd.to_datetime(df[timestamp_col]).dropna()
-            if len(time_points_display) == len(time_points):
-                time_points = time_points_display
+            if len(time_points_display) == len(clean_df):
                 plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
                 plt.xticks(rotation=45)
+            else:
+                # 如果长度不匹配，回退到使用数值时间点
+                time_points_display = time_points
         elif 'week' in df.columns:
-            time_points_display = [pd.to_datetime(w.split('/')[0]) for w in df['week'] if isinstance(w, str)]
-            if len(time_points_display) == len(time_points):
-                time_points = time_points_display
-                plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-                plt.xticks(rotation=45)
+            try:
+                dates = []
+                for w in df['week']:
+                    if isinstance(w, str) and '/' in w:
+                        dates.append(pd.to_datetime(w.split('/')[0]))
+                    else:
+                        dates.append(None)
+                time_points_display = pd.Series(dates).dropna()
+                if len(time_points_display) == len(clean_df):
+                    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+                    plt.xticks(rotation=45)
+                else:
+                    # 如果长度不匹配，回退到使用数值时间点
+                    time_points_display = time_points
+            except:
+                time_points_display = time_points
         else:
             time_points_display = time_points
         
-        # Get predicted values
+        # 获取预测值
         if hasattr(model, 'fittedvalues'):
             predicted = model.fittedvalues
-            # Ensure predicted values align with observed data points
-            if len(predicted) != len(time_points):
+            # 确保预测值与观察数据点对齐
+            if len(predicted) != len(clean_df):
                 print(f"Warning: Dimension mismatch in visualization. Using only aligned data points.")
-                # We need to align the model's predictions with our clean data
-                # This is a simple approach - in a real app we would need more sophisticated alignment
-                idx_range = min(len(time_points), len(predicted))
-                time_points = time_points[:idx_range]
-                time_points_display = time_points_display[:idx_range] if isinstance(time_points_display, pd.Series) else time_points_display[:idx_range]
-                observed = observed[:idx_range]
-                predicted = predicted[:idx_range]
+                # 找到最小公共长度
+                min_len = min(len(clean_df), len(predicted))
+                observed = observed[:min_len]
+                time_points = time_points[:min_len]
+                predicted = predicted[:min_len]
+                # 调整display时间点
+                if isinstance(time_points_display, pd.Series) and len(time_points_display) > min_len:
+                    time_points_display = time_points_display[:min_len]
+                elif not isinstance(time_points_display, pd.Series):
+                    time_points_display = time_points_display[:min_len]
         else:
-            # For ARIMA models, predict on our clean data
+            # 对于ARIMA模型，在我们的清洁数据上预测
             try:
                 predicted = model.predict()
-                # Check dimensions and align if needed
-                if len(predicted) != len(time_points):
-                    idx_range = min(len(time_points), len(predicted))
-                    time_points = time_points[:idx_range]
-                    time_points_display = time_points_display[:idx_range] if isinstance(time_points_display, pd.Series) else time_points_display[:idx_range]
-                    observed = observed[:idx_range]
-                    predicted = predicted[:idx_range]
+                # 检查维度并在需要时对齐
+                if len(predicted) != len(clean_df):
+                    min_len = min(len(clean_df), len(predicted))
+                    observed = observed[:min_len]
+                    time_points = time_points[:min_len]
+                    predicted = predicted[:min_len]
+                    # 调整display时间点
+                    if isinstance(time_points_display, pd.Series) and len(time_points_display) > min_len:
+                        time_points_display = time_points_display[:min_len]
+                    elif not isinstance(time_points_display, pd.Series):
+                        time_points_display = time_points_display[:min_len]
             except Exception as e:
                 print(f"Warning: Could not get predictions for visualization: {str(e)}")
                 return
         
-        # Find the intervention point
-        intervention_idx = clean_df['post_intervention'].idxmax() if 1 in clean_df['post_intervention'].values else None
+        # 找到干预点
+        intervention_idx = np.argmax(clean_df['post_intervention'].values) if 1 in clean_df['post_intervention'].values else None
         intervention_time = clean_df.loc[intervention_idx, 'time'] if intervention_idx is not None else None
-        intervention_time_display = intervention_time
-        if intervention_idx is not None:
-            if timestamp_col and timestamp_col in df.columns and not df[timestamp_col].isna().all():
-                if intervention_idx < len(df) and not pd.isna(df.loc[intervention_idx, timestamp_col]):
-                    intervention_time_display = pd.to_datetime(df.loc[intervention_idx, timestamp_col])
-            elif 'week' in df.columns and intervention_idx < len(df):
-                if isinstance(df.loc[intervention_idx, 'week'], str):
-                    intervention_time_display = pd.to_datetime(df.loc[intervention_idx, 'week'].split('/')[0])
         
-        # Create figure
+        # 获取干预点的显示时间
+        if intervention_idx is not None:
+            if isinstance(time_points_display, pd.Series) and intervention_idx < len(time_points_display):
+                intervention_time_display = time_points_display.iloc[intervention_idx]
+            elif not isinstance(time_points_display, pd.Series) and intervention_idx < len(time_points_display):
+                intervention_time_display = time_points_display[intervention_idx]
+            else:
+                intervention_time_display = intervention_time
+        else:
+            intervention_time_display = None
+        
+        # 创建图形
         plt.figure(figsize=(12, 8))
         
-        # Plot observed values
-        plt.scatter(time_points_display, observed, color='blue', alpha=0.6, label='Observed')
+        # 绘制观察值
+        if isinstance(time_points_display, pd.Series):
+            plt.scatter(time_points_display.iloc[:len(observed)], observed, color='blue', alpha=0.6, label='观察值')
+        else:
+            plt.scatter(time_points_display[:len(observed)], observed, color='blue', alpha=0.6, label='观察值')
         
-        # Plot fitted values
-        plt.plot(time_points_display, predicted, 'r-', linewidth=2, label='Fitted')
+        # 绘制拟合值
+        if isinstance(time_points_display, pd.Series):
+            plt.plot(time_points_display.iloc[:len(predicted)], predicted, 'r-', linewidth=2, label='拟合值')
+        else:
+            plt.plot(time_points_display[:len(predicted)], predicted, 'r-', linewidth=2, label='拟合值')
         
-        # Add vertical line at intervention
+        # 添加干预点的垂直线
         if intervention_time_display is not None:
             plt.axvline(x=intervention_time_display, color='green', linestyle='--', 
-                       label='Intervention Point')
+                       label='干预点')
         
-        # Add trend lines (pre and post)
-        if 'Segmented Regression' in model_name:
-            try:
-                # For segmented regression models, we can directly calculate trend lines
+        # 添加趋势线（干预前后）
+        try:
+            # 确保我们有干预点
+            if intervention_idx is not None and 'Segmented Regression' in model_name:
+                # 直接计算趋势线
                 pre_trend = model.params['Intercept'] + model.params['time'] * time_points
-                post_trend = (model.params['Intercept'] + model.params['post_intervention']) + \
-                            (model.params['time'] + model.params['time_since_intervention']) * \
-                            (time_points - intervention_time)
+                post_slope = model.params['time'] + model.params['time_since_intervention']
+                post_intercept = model.params['Intercept'] + model.params['post_intervention']
+                post_trend = post_intercept + post_slope * (time_points - intervention_time)
                 
-                # Only plot trends for relevant time periods
-                pre_mask = clean_df['post_intervention'].iloc[:len(time_points)] == 0
-                post_mask = clean_df['post_intervention'].iloc[:len(time_points)] == 1
+                # 创建前后干预的掩码
+                pre_mask = clean_df['post_intervention'].values == 0
+                post_mask = clean_df['post_intervention'].values == 1
                 
-                plt.plot(time_points_display[pre_mask], pre_trend[pre_mask], 'b--', linewidth=1, 
-                        label='Pre-intervention trend')
-                plt.plot(time_points_display[post_mask], post_trend[post_mask], 'g--', linewidth=1,
-                        label='Post-intervention trend')
-            except Exception as e:
-                print(f"Warning: Could not plot trend lines: {str(e)}")
+                # 确保掩码长度正确
+                pre_mask = pre_mask[:len(time_points)]
+                post_mask = post_mask[:len(time_points)]
+                
+                # 仅绘制相关时间段的趋势
+                if isinstance(time_points_display, pd.Series):
+                    time_display_pre = time_points_display.iloc[:len(time_points)][pre_mask]
+                    time_display_post = time_points_display.iloc[:len(time_points)][post_mask]
+                else:
+                    time_display_pre = time_points_display[:len(time_points)][pre_mask]
+                    time_display_post = time_points_display[:len(time_points)][post_mask]
+                
+                plt.plot(time_display_pre, pre_trend[pre_mask], 'b--', linewidth=2, label='干预前趋势线')
+                plt.plot(time_display_post, post_trend[post_mask], 'g--', linewidth=2, label='干预后趋势线')
+            
+            elif intervention_idx is not None:
+                # 对于其他模型类型（如ARIMA），使用近似方法
+                pass  # 这里可以添加ARIMA模型的趋势线计算
+                
+        except Exception as e:
+            print(f"Warning: Could not plot trend lines: {str(e)}")
+        
+        # 添加标签和标题
+        plt.title(f'Program {program_id}: {program_name} - ITS Analysis\nModel: {model_name}')
+        plt.xlabel('日期' if timestamp_col else '时间')
+        plt.ylabel('情感评分均值')
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        
+        # 保存图形
+        plt.savefig(f'figures/its/program_{program_id}_its.png')
+        plt.close()
+        
     except Exception as e:
         print(f"Warning: Visualization failed for program {program_id}: {str(e)}")
         return
-    
-    # Add labels and title
-    plt.title(f'Program {program_id}: {program_name} - ITS Analysis\nModel: {model_name}')
-    plt.xlabel('日期' if timestamp_col else '时间')
-    plt.ylabel('Mean Sentiment Score')
-    plt.legend()
-    plt.grid(True, alpha=0.3)
-    plt.tight_layout()
-    
-    # Save figure
-    plt.savefig(f'figures/its/program_{program_id}_its.png')
-    plt.close()
 
 def run_placebo_test(df, program_id, program_name, num_placebos=3):
     """Run placebo tests with fake intervention points"""
@@ -509,6 +552,13 @@ def run_placebo_test(df, program_id, program_name, num_placebos=3):
         if timestamp_col and timestamp_col in df.columns and not df[timestamp_col].isna().all():
             time_points_display = pd.to_datetime(df[timestamp_col]).dropna()
             if len(time_points_display) == len(clean_df['time']):
+                time_points = time_points_display
+                plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+                plt.xticks(rotation=45)
+        elif 'week' in df.columns:
+            time_points_display = [pd.to_datetime(w.split('/')[0]) for w in df['week'] if isinstance(w, str)]
+            if len(time_points_display) == len(clean_df['time']):
+                time_points = time_points_display
                 plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
                 plt.xticks(rotation=45)
         
@@ -521,8 +571,8 @@ def run_placebo_test(df, program_id, program_name, num_placebos=3):
             actual_trend_p = actual_model.pvalues['time_since_intervention']
             
             # Plot actual data and intervention
-            plt.scatter(time_points_display, clean_df['mean_sentiment'], color='blue', alpha=0.3, label='Observed data')
-            actual_time_display = time_points_display.iloc[actual_idx] if isinstance(time_points_display, pd.Series) else clean_df.loc[actual_idx, 'time']
+            plt.scatter(time_points, clean_df['mean_sentiment'], color='blue', alpha=0.3, label='Observed data')
+            actual_time_display = time_points.iloc[actual_idx] if isinstance(time_points, pd.Series) else time_points[actual_idx]
             plt.axvline(x=actual_time_display, color='red', linestyle='-', 
                        linewidth=2, label='Actual intervention')
             
@@ -545,7 +595,7 @@ def run_placebo_test(df, program_id, program_name, num_placebos=3):
                     placebo_p_values.append(placebo_p)
                     
                     # Plot placebo intervention line
-                    placebo_time_display = time_points_display.iloc[idx] if isinstance(time_points_display, pd.Series) else placebo_time
+                    placebo_time_display = time_points.iloc[idx] if isinstance(time_points, pd.Series) else time_points[idx]
                     plt.axvline(x=placebo_time_display, color='gray', linestyle='--', alpha=0.7,
                                label=f'Placebo {i+1} (p={placebo_p:.4f})')
                     
@@ -572,86 +622,6 @@ def run_placebo_test(df, program_id, program_name, num_placebos=3):
     
     return placebo_p_values
 
-def create_overall_its_visualization(its_summary):
-    """Create visualizations summarizing ITS results across all programs"""
-    if len(its_summary) == 0:
-        print("Warning: No data for overall ITS visualizations")
-        return
-    
-    # 1. Trend change effect sizes
-    plt.figure(figsize=(14, 8))
-    # Sort by trend change
-    sorted_df = its_summary.sort_values('trend_change')
-    
-    # Create bar plot of trend changes
-    bars = plt.bar(sorted_df['program_name'], sorted_df['trend_change'], 
-                  color=[('green' if x > 0 else 'red') for x in sorted_df['trend_change']])
-    
-    # Add significance markers
-    for i, significant in enumerate(sorted_df['significant_trend_0.05']):
-        if significant:
-            plt.text(i, sorted_df['trend_change'].iloc[i], '*', 
-                    ha='center', va='bottom' if sorted_df['trend_change'].iloc[i] > 0 else 'top', 
-                    fontsize=20)
-    
-    plt.title('Trend Change by Program After Intervention')
-    plt.xlabel('Service Program')
-    plt.ylabel('Trend Change (Slope Difference)')
-    plt.axhline(y=0, color='black', linestyle='-', alpha=0.3)
-    plt.grid(axis='y', alpha=0.3)
-    plt.xticks(rotation=90)
-    plt.tight_layout()
-    plt.savefig('figures/its/overall_trend_change.png')
-    plt.close()
-    
-    # 2. Level change effect sizes
-    plt.figure(figsize=(14, 8))
-    # Sort by level change
-    sorted_df = its_summary.sort_values('level_change')
-    
-    # Create bar plot of level changes
-    bars = plt.bar(sorted_df['program_name'], sorted_df['level_change'], 
-                  color=[('green' if x > 0 else 'red') for x in sorted_df['level_change']])
-    
-    # Add significance markers
-    for i, significant in enumerate(sorted_df['significant_level_0.05']):
-        if significant:
-            plt.text(i, sorted_df['level_change'].iloc[i], '*', 
-                    ha='center', va='bottom' if sorted_df['level_change'].iloc[i] > 0 else 'top', 
-                    fontsize=20)
-    
-    plt.title('Level Change by Program After Intervention')
-    plt.xlabel('Service Program')
-    plt.ylabel('Level Change (Intercept Difference)')
-    plt.axhline(y=0, color='black', linestyle='-', alpha=0.3)
-    plt.grid(axis='y', alpha=0.3)
-    plt.xticks(rotation=90)
-    plt.tight_layout()
-    plt.savefig('figures/its/overall_level_change.png')
-    plt.close()
-    
-    # 3. Level vs trend changes scatter plot
-    plt.figure(figsize=(10, 8))
-    plt.scatter(its_summary['level_change'], its_summary['trend_change'], 
-               c=[(1 if x or y else 0) for x, y in zip(its_summary['significant_level_0.05'], 
-                                                      its_summary['significant_trend_0.05'])],
-               cmap='viridis', alpha=0.7, s=100)
-    
-    # Add program labels
-    for i, row in its_summary.iterrows():
-        plt.annotate(f"Program {row['program_id']}", 
-                    (row['level_change'], row['trend_change']),
-                    xytext=(5, 5), textcoords='offset points')
-    
-    plt.title('Level Change vs Trend Change')
-    plt.xlabel('Level Change (Intercept Difference)')
-    plt.ylabel('Trend Change (Slope Difference)')
-    plt.axhline(y=0, color='gray', linestyle='--', alpha=0.5)
-    plt.axvline(x=0, color='gray', linestyle='--', alpha=0.5)
-    plt.grid(True, alpha=0.3)
-    plt.tight_layout()
-    plt.savefig('figures/its/level_vs_trend.png')
-    plt.close()
 
 if __name__ == "__main__":
     its_summary = run_its_analysis()

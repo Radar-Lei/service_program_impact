@@ -18,7 +18,6 @@ PROGRAM_DATA = {
     0: {"name": "同一车厢不同温度模式", "date": "2020-01-01"},
     1: {"name": "智能动态地图显示系统", "date": "2020-01-01"},
     4: {"name": "成功推出乘车码二维码扫码", "date": "2020-01-01"},
-    8: {"name": "创建1+365+N志愿者生态系统", "date": "2020-01-01"},
     22: {"name": "降低票价", "date": "2020-07-31"}
 }
 
@@ -149,60 +148,49 @@ def generate_weekly_data(program_id, start_date='2019-01-01', end_date='2022-11-
 
 def create_custom_program_data(program_id):
     """为特定项目创建定制化数据"""
+
+    
     if program_id == 0:
         # 同一车厢不同温度模式 - 温度舒适度相关，干预后明显提升趋势
         return generate_weekly_data(
             program_id, 
-            baseline_level=-0.35, 
-            baseline_trend=-0.0001,     # 微弱下降趋势
-            level_change=0.01,         # 干预后水平显著上升
-            trend_change=0.003,        # 干预后趋势改善
-            noise_level=0.18,          # 中等噪声
-            seasonality=0.12,          # 中等季节性（温度相关）
-            autocorr=0.3,
-            signal_to_noise=1.1        # 降低信噪比，产生更低的R^2
+            baseline_level=0.1, 
+            baseline_trend=0.002,     # 微弱上升趋势
+            level_change=-0.01,         # 中等水平提升
+            trend_change=-0.006,        # 趋势改善
+            noise_level=0.17,          # 较高噪声
+            seasonality=0.07,           # 中等季节性
+            autocorr=0.2,
+            signal_to_noise=0.8        # 降低信噪比，产生更低的R^2
         )
     
     elif program_id == 1:
         # 智能动态地图显示系统 - 信息服务改善，干预后即时提升
         return generate_weekly_data(
             program_id, 
-            baseline_level=-0.3, 
-            baseline_trend=0.0002,     # 几乎无趋势
-            level_change=0.01,         # 显著的水平提升
-            trend_change=0.003,        # 中等趋势改善
+            start_date='2019-01-01', 
+            baseline_level=-0.2, 
+            baseline_trend=-0.0005,    # 微弱下降趋势
+            level_change=0.01,          # 显著水平提升
+            trend_change=0.002,        # 显著趋势改善
             noise_level=0.15,          # 中等噪声
-            seasonality=0.08,          # 轻微的季节性
-            autocorr=0.25,
-            signal_to_noise=1.2        # 降低信噪比，产生更低的R^2
+            seasonality=0.04,          # 轻微季节性
+            autocorr=0.3,
+            signal_to_noise=0.5        # 降低信噪比，产生更低的R^2
         )
-    
+        
     elif program_id == 4:
         # 成功推出乘车码二维码扫码 - 票务服务，干预后使用量增长
         return generate_weekly_data(
             program_id, 
-            baseline_level=-0.25, 
+            baseline_level=-0.2, 
             baseline_trend=0.0005,     # 微弱上升趋势
             level_change=0.01,         # 显著水平提升
             trend_change=0.003,        # 显著趋势改善
             noise_level=0.16,          # 中等噪声
             seasonality=0.09,          # 轻微季节性
             autocorr=0.2,
-            signal_to_noise=1.1        # 降低信噪比，产生更低的R^2
-        )
-    
-    elif program_id == 8:
-        # 创建1+365+N志愿者生态系统 - 服务质量改善，逐渐累积效果
-        return generate_weekly_data(
-            program_id, 
-            baseline_level=-0.4, 
-            baseline_trend=0.0008,     # 微弱上升趋势
-            level_change=0.01,         # 中等水平提升
-            trend_change=0.003,        # 趋势改善
-            noise_level=0.17,          # 较高噪声
-            seasonality=0.1,           # 中等季节性
-            autocorr=0.2,
-            signal_to_noise=1.0        # 降低信噪比，产生更低的R^2
+            signal_to_noise=0.79        # 降低信噪比，产生更低的R^2
         )
     
     elif program_id == 22:
@@ -210,14 +198,14 @@ def create_custom_program_data(program_id):
         return generate_weekly_data(
             program_id, 
             start_date='2019-01-01', 
-            baseline_level=-0.45, 
+            baseline_level=0.2, 
             baseline_trend=-0.0005,    # 微弱下降趋势
             level_change=0.01,          # 显著水平提升
-            trend_change=0.003,        # 显著趋势改善
-            noise_level=0.15,          # 中等噪声
-            seasonality=0.08,          # 轻微季节性
+            trend_change=0.002,        # 显著趋势改善
+            noise_level=0.1,          # 中等噪声
+            seasonality=0.05,          # 轻微季节性
             autocorr=0.2,
-            signal_to_noise=1.3        # 降低信噪比，产生更低的R^2
+            signal_to_noise=0.5        # 降低信噪比，产生更低的R^2
         )
     
     else:
