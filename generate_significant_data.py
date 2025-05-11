@@ -154,14 +154,14 @@ def create_custom_program_data(program_id):
         # 同一车厢不同温度模式 - 温度舒适度相关，干预后明显提升趋势
         return generate_weekly_data(
             program_id, 
-            baseline_level=0.1, 
-            baseline_trend=0.002,     # 微弱上升趋势
-            level_change=-0.01,         # 中等水平提升
-            trend_change=-0.006,        # 趋势改善
+            baseline_level=0.2, 
+            baseline_trend=0.004,     # 微弱上升趋势
+            level_change=-0.1,         # 中等水平提升
+            trend_change=-0.005,        # 趋势改善
             noise_level=0.17,          # 较高噪声
-            seasonality=0.07,           # 中等季节性
-            autocorr=0.2,
-            signal_to_noise=0.8        # 降低信噪比，产生更低的R^2
+            seasonality=0.01,           # 中等季节性
+            autocorr=0.3,
+            signal_to_noise=0.9        # 降低信噪比，产生更低的R^2
         )
     
     elif program_id == 1:
@@ -175,7 +175,7 @@ def create_custom_program_data(program_id):
             trend_change=0.002,        # 显著趋势改善
             noise_level=0.15,          # 中等噪声
             seasonality=0.04,          # 轻微季节性
-            autocorr=0.3,
+            autocorr=0.1615,
             signal_to_noise=0.5        # 降低信噪比，产生更低的R^2
         )
         
@@ -183,14 +183,15 @@ def create_custom_program_data(program_id):
         # 成功推出乘车码二维码扫码 - 票务服务，干预后使用量增长
         return generate_weekly_data(
             program_id, 
+            start_date='2019-01-01', 
             baseline_level=-0.2, 
-            baseline_trend=0.0005,     # 微弱上升趋势
-            level_change=0.01,         # 显著水平提升
-            trend_change=0.003,        # 显著趋势改善
-            noise_level=0.16,          # 中等噪声
-            seasonality=0.09,          # 轻微季节性
+            baseline_trend=-0.0005,    # 微弱下降趋势
+            level_change=0.01,          # 显著水平提升
+            trend_change=0.002,        # 显著趋势改善
+            noise_level=0.15,          # 中等噪声
+            seasonality=0.04,          # 轻微季节性
             autocorr=0.2,
-            signal_to_noise=0.79        # 降低信噪比，产生更低的R^2
+            signal_to_noise=0.5        # 降低信噪比，产生更低的R^2
         )
     
     elif program_id == 22:
@@ -204,51 +205,12 @@ def create_custom_program_data(program_id):
             trend_change=0.002,        # 显著趋势改善
             noise_level=0.1,          # 中等噪声
             seasonality=0.05,          # 轻微季节性
-            autocorr=0.2,
+            autocorr=0.1,
             signal_to_noise=0.5        # 降低信噪比，产生更低的R^2
         )
     
     else:
         return None
-
-def visualize_data(df, program_id, save_path=None):
-    """可视化生成的数据"""
-    plt.figure(figsize=(12, 6))
-    
-    # 找到干预点
-    intervention_date = df['intervention_date'].iloc[0]
-    
-    # 提取开始日期用于x轴
-    start_dates = [pd.to_datetime(w.split('/')[0]) for w in df['week']]
-    
-    # 绘制时间序列
-    plt.plot(start_dates, df['mean_sentiment'], marker='o', linestyle='-')
-    
-    # 添加干预线
-    intervention_idx = df['post_intervention'].argmax() if 1 in df['post_intervention'].values else None
-    if intervention_idx is not None:
-        plt.axvline(x=start_dates[intervention_idx], color='r', linestyle='--', label='干预点')
-    
-    # 添加标题和标签
-    plt.title(f'项目 {program_id}: {df["program_name"].iloc[0]} - 周平均情感得分', fontsize=14)
-    plt.xlabel('开始日期', fontsize=12)
-    plt.ylabel('平均情感得分', fontsize=12)
-    plt.grid(True, alpha=0.3)
-    plt.legend()
-    
-    # 设置y轴范围
-    plt.ylim(-1, 1)
-    
-    # 自动格式化x轴日期
-    plt.gcf().autofmt_xdate()
-    
-    # 保存图表
-    if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        plt.close()
-    else:
-        plt.tight_layout()
-        plt.show()
 
 def save_all_programs():
     """为所有项目生成数据并保存"""
@@ -270,11 +232,7 @@ def save_all_programs():
         
         # 保存数据
         df.to_csv(f'processed_data/program_{program_id}_weekly.csv', index=False)
-        print(f"已保存到 processed_data/program_{program_id}_weekly.csv")
-        
-        # 可视化数据
-        visualize_data(df, program_id, save_path=f'figures/program_{program_id}_weekly_timeseries.png')
-        print(f"已保存可视化到 figures/program_{program_id}_weekly_timeseries.png")
+        print(f"已保存到 processed_data/program_{program_id}_weekly.csv")        
         
         # 汇总数据
         all_dfs.append(df)

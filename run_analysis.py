@@ -9,6 +9,7 @@ from its_analysis import run_its_analysis
 import shutil
 import sys
 import argparse
+import traceback
 
 # Setup for Chinese font display
 import matplotlib.pyplot as plt
@@ -110,71 +111,202 @@ def check_processed_data_exists(program_ids=None, regenerate_summary=True):
         return False, None, regenerate_summary
 
 def regenerate_summary_files():
-    """重新生成汇总数据文件（all_programs_weekly.csv和all_programs_monthly.csv）
-    
-    从processed_data目录中读取各个程序的数据文件，重新生成汇总文件
-    
-    Returns:
-        tuple: (是否成功重新生成汇总文件, 所有可用程序ID列表)
     """
-    print("重新生成汇总数据文件...")
+    重新生成或更新汇总数据文件（all_programs_weekly.csv和all_programs_monthly.csv）。
+    会加载现有的汇总文件，并用 processed_data/ 目录中所有 program_X_*.csv 的最新数据更新它们。
+    如果一个 program_id 同时存在于旧的汇总文件和新的单个文件中，则以单个文件为准。
+    如果一个 program_id 只存在于旧的汇总文件中（且对应的单个 program_X_*.csv 文件不存在），它将被保留。
+    如果一个 program_id 只存在于新的单个文件中，它将被添加。
+    """
+    print("重新生成/更新汇总数据文件...")
     
     if not os.path.exists('processed_data'):
         print("processed_data目录不存在，无法重新生成汇总文件")
         return False, []
-    
-    # 收集所有周数据和月数据文件
-    weekly_dfs = []
-    monthly_dfs = []
-    available_program_ids = set()
-    
+
+    # 收集所有当前单个程序的数据
+    current_individual_weekly_dfs = []
+    current_individual_monthly_dfs = []
+    available_program_ids_from_individual_files = set()
+
     for file in os.listdir('processed_data'):
         file_path = os.path.join('processed_data', file)
         
-        # 收集各个程序的周数据
-        if file.startswith('program_') and 'weekly' in file:
+        if file.startswith('program_') and file.endswith('_weekly.csv'):
             try:
-                # 从文件名中提取程序ID
-                program_id = int(file.split('_')[1])
-                available_program_ids.add(program_id)
+                program_id = int(file.split('_')[1]) # Extract program_id from filename like "program_123_weekly.csv"
                 
                 df = pd.read_csv(file_path)
-                weekly_dfs.append(df)
+                if not df.empty:
+                    # Ensure program_id column exists or add it based on filename if necessary
+                    if 'program_id' not in df.columns:
+                        df['program_id'] = program_id
+                    current_individual_weekly_dfs.append(df)
+                    available_program_ids_from_individual_files.add(program_id)
+                elif df.empty:
+                    # If individual file is empty, still note the program_id if we want to ensure it's "blanked" in summary
+                    available_program_ids_from_individual_files.add(program_id)
+
+            except ValueError:
+                print(f"警告: 无法从文件名 {file} 中解析 program_id。跳过此文件。")
             except Exception as e:
-                print(f"读取文件 {file} 时出错: {e}")
+                print(f"读取或解析周数据文件 {file} 时出错: {e}")
         
-        # 收集各个程序的月数据
-        elif file.startswith('program_') and 'monthly' in file:
+        elif file.startswith('program_') and file.endswith('_monthly.csv'):
             try:
-                # 从文件名中提取程序ID
                 program_id = int(file.split('_')[1])
-                available_program_ids.add(program_id)
-                
+
                 df = pd.read_csv(file_path)
-                monthly_dfs.append(df)
+                if not df.empty:
+                    if 'program_id' not in df.columns:
+                        df['program_id'] = program_id
+                    current_individual_monthly_dfs.append(df)
+                    available_program_ids_from_individual_files.add(program_id)
+                elif df.empty:
+                    available_program_ids_from_individual_files.add(program_id)
+
+            except ValueError:
+                print(f"警告: 无法从文件名 {file} 中解析 program_id。跳过此文件。")
             except Exception as e:
-                print(f"读取文件 {file} 时出错: {e}")
-    
-    # 生成汇总周数据文件
-    if weekly_dfs:
+                print(f"读取或解析月数据文件 {file} 时出错: {e}")
+
+    # 从收集到的单个程序文件创建当前的完整数据集
+    current_weekly_from_individuals_df = None
+    if current_individual_weekly_dfs:
+        current_weekly_from_individuals_df = pd.concat(current_individual_weekly_dfs, ignore_index=True)
+
+    current_monthly_from_individuals_df = None
+    if current_individual_monthly_dfs:
+        current_monthly_from_individuals_df = pd.concat(current_individual_monthly_dfs, ignore_index=True)
+
+    # 加载现有的汇总文件
+    existing_all_weekly_df = None
+    all_programs_weekly_path = 'processed_data/all_programs_weekly.csv'
+    if os.path.exists(all_programs_weekly_path):
         try:
-            all_weekly_df = pd.concat(weekly_dfs, ignore_index=True)
-            all_weekly_df.to_csv('processed_data/all_programs_weekly.csv', index=False)
-            print("已重新生成汇总周数据文件: all_programs_weekly.csv")
+            existing_all_weekly_df = pd.read_csv(all_programs_weekly_path)
+            if existing_all_weekly_df.empty: 
+                existing_all_weekly_df = None
+        except pd.errors.EmptyDataError:
+            print(f"警告: {all_programs_weekly_path} 为空，将被覆盖。")
+            existing_all_weekly_df = None
         except Exception as e:
-            print(f"生成汇总周数据文件时出错: {e}")
-    
-    # 生成汇总月数据文件
-    if monthly_dfs:
+            print(f"读取 {all_programs_weekly_path} 时出错，将尝试覆盖: {e}")
+            existing_all_weekly_df = None
+
+    existing_all_monthly_df = None
+    all_programs_monthly_path = 'processed_data/all_programs_monthly.csv'
+    if os.path.exists(all_programs_monthly_path):
         try:
-            all_monthly_df = pd.concat(monthly_dfs, ignore_index=True)
-            all_monthly_df.to_csv('processed_data/all_programs_monthly.csv', index=False)
-            print("已重新生成汇总月数据文件: all_programs_monthly.csv")
+            existing_all_monthly_df = pd.read_csv(all_programs_monthly_path)
+            if existing_all_monthly_df.empty:
+                existing_all_monthly_df = None
+        except pd.errors.EmptyDataError:
+            print(f"警告: {all_programs_monthly_path} 为空，将被覆盖。")
+            existing_all_monthly_df = None
         except Exception as e:
-            print(f"生成汇总月数据文件时出错: {e}")
-    
-    print(f"找到了以下所有程序ID的数据: {sorted(list(available_program_ids))}")
-    return True, sorted(list(available_program_ids))
+            print(f"读取 {all_programs_monthly_path} 时出错，将尝试覆盖: {e}")
+            existing_all_monthly_df = None
+
+    # --- 合并周数据 ---
+    final_weekly_df_to_save = None
+    ids_in_current_individuals_weekly = set()
+    if current_weekly_from_individuals_df is not None and 'program_id' in current_weekly_from_individuals_df.columns:
+        ids_in_current_individuals_weekly = set(current_weekly_from_individuals_df['program_id'].unique())
+    elif not current_individual_weekly_dfs: # No individual files found/processed
+        ids_in_current_individuals_weekly = set() # No current program IDs from files
+    else: # current_weekly_from_individuals_df is None but current_individual_weekly_dfs is not, or program_id missing
+        # This case implies empty individual files were found, or files without program_id.
+        # We rely on available_program_ids_from_individual_files for IDs that should be considered "current"
+        ids_in_current_individuals_weekly = available_program_ids_from_individual_files
+
+
+    if current_weekly_from_individuals_df is not None: # Data from individual files exists
+        if existing_all_weekly_df is not None and 'program_id' in existing_all_weekly_df.columns:
+            filtered_existing_weekly = existing_all_weekly_df[~existing_all_weekly_df['program_id'].isin(ids_in_current_individuals_weekly)]
+            final_weekly_df_to_save = pd.concat([filtered_existing_weekly, current_weekly_from_individuals_df], ignore_index=True)
+        else: # No existing summary or it's invalid, so current individual data is the summary
+            final_weekly_df_to_save = current_weekly_from_individuals_df
+    elif existing_all_weekly_df is not None: # No data from individual files, but old summary exists
+        # If there are program IDs from *empty* individual files, we might want to clear them from existing summary
+        if ids_in_current_individuals_weekly: # non-empty if empty individual files were found
+             if 'program_id' in existing_all_weekly_df.columns:
+                final_weekly_df_to_save = existing_all_weekly_df[~existing_all_weekly_df['program_id'].isin(ids_in_current_individuals_weekly)]
+             else: # existing summary has no program_id column, cannot filter
+                final_weekly_df_to_save = existing_all_weekly_df.copy() # or treat as error
+        else: # No current files at all (not even empty ones), keep existing summary as is
+            final_weekly_df_to_save = existing_all_weekly_df.copy() 
+    # If both current_weekly_from_individuals_df and existing_all_weekly_df are None, final_weekly_df_to_save remains None
+
+    if final_weekly_df_to_save is not None and not final_weekly_df_to_save.empty:
+        try:
+            if 'program_id' in final_weekly_df_to_save.columns and 'week' in final_weekly_df_to_save.columns:
+                 final_weekly_df_to_save['sort_key_week'] = final_weekly_df_to_save['week'].apply(lambda x: x.split('/')[0] if isinstance(x, str) and '/' in x else str(x))
+                 final_weekly_df_to_save = final_weekly_df_to_save.sort_values(by=['program_id', 'sort_key_week']).drop(columns=['sort_key_week'])
+            elif 'program_id' in final_weekly_df_to_save.columns:
+                 final_weekly_df_to_save = final_weekly_df_to_save.sort_values(by=['program_id'])
+            
+            final_weekly_df_to_save.to_csv(all_programs_weekly_path, index=False)
+            print(f"已更新/生成汇总周数据文件: {all_programs_weekly_path}")
+        except Exception as e:
+            print(f"保存汇总周数据文件 {all_programs_weekly_path} 时出错: {e}")
+    elif final_weekly_df_to_save is not None and final_weekly_df_to_save.empty: # Save empty if result is empty
+        pd.DataFrame().to_csv(all_programs_weekly_path, index=False)
+        print(f"汇总周数据文件 {all_programs_weekly_path} 更新为空。")
+    elif final_weekly_df_to_save is None and os.path.exists(all_programs_weekly_path):
+        # This means no data from individual files and no existing summary was loaded or it was empty.
+        # If the file exists but we decided it's "None" (e.g. error reading), we might overwrite with empty.
+        # To be safe, only write empty if we explicitly decided the result is an empty DataFrame.
+        # If final_weekly_df_to_save is None, it means no data source was valid.
+        print(f"没有有效的周数据来源，未修改 {all_programs_weekly_path}。")
+
+
+    # --- 合并月数据 (类似逻辑) ---
+    final_monthly_df_to_save = None
+    ids_in_current_individuals_monthly = set()
+    if current_monthly_from_individuals_df is not None and 'program_id' in current_monthly_from_individuals_df.columns:
+        ids_in_current_individuals_monthly = set(current_monthly_from_individuals_df['program_id'].unique())
+    elif not current_individual_monthly_dfs:
+        ids_in_current_individuals_monthly = set()
+    else:
+        ids_in_current_individuals_monthly = available_program_ids_from_individual_files
+
+
+    if current_monthly_from_individuals_df is not None:
+        if existing_all_monthly_df is not None and 'program_id' in existing_all_monthly_df.columns:
+            filtered_existing_monthly = existing_all_monthly_df[~existing_all_monthly_df['program_id'].isin(ids_in_current_individuals_monthly)]
+            final_monthly_df_to_save = pd.concat([filtered_existing_monthly, current_monthly_from_individuals_df], ignore_index=True)
+        else:
+            final_monthly_df_to_save = current_monthly_from_individuals_df
+    elif existing_all_monthly_df is not None:
+        if ids_in_current_individuals_monthly:
+            if 'program_id' in existing_all_monthly_df.columns:
+                final_monthly_df_to_save = existing_all_monthly_df[~existing_all_monthly_df['program_id'].isin(ids_in_current_individuals_monthly)]
+            else:
+                final_monthly_df_to_save = existing_all_monthly_df.copy()
+        else:
+            final_monthly_df_to_save = existing_all_monthly_df.copy()
+
+    if final_monthly_df_to_save is not None and not final_monthly_df_to_save.empty:
+        try:
+            if 'program_id' in final_monthly_df_to_save.columns and 'month' in final_monthly_df_to_save.columns:
+                final_monthly_df_to_save = final_monthly_df_to_save.sort_values(by=['program_id', 'month'])
+            elif 'program_id' in final_monthly_df_to_save.columns:
+                final_monthly_df_to_save = final_monthly_df_to_save.sort_values(by=['program_id'])
+
+            final_monthly_df_to_save.to_csv(all_programs_monthly_path, index=False)
+            print(f"已更新/生成汇总月数据文件: {all_programs_monthly_path}")
+        except Exception as e:
+            print(f"保存汇总月数据文件 {all_programs_monthly_path} 时出错: {e}")
+    elif final_monthly_df_to_save is not None and final_monthly_df_to_save.empty:
+        pd.DataFrame().to_csv(all_programs_monthly_path, index=False)
+        print(f"汇总月数据文件 {all_programs_monthly_path} 更新为空。")
+    elif final_monthly_df_to_save is None and os.path.exists(all_programs_monthly_path):
+         print(f"没有有效的月数据来源，未修改 {all_programs_monthly_path}。")
+        
+    # Return all program IDs found in *any* individual file during this run
+    print(f"在单个程序文件中找到了以下程序ID的数据: {sorted(list(available_program_ids_from_individual_files))}")
+    return True, sorted(list(available_program_ids_from_individual_files))
 
 def get_all_available_program_ids():
     """获取所有可用的程序ID
@@ -247,96 +379,103 @@ def run_complete_analysis(feedback_dir, program_ids=None, force_preprocess=False
             os.makedirs(directory)
     
     try:
-        # 获取所有可用的程序ID，用于后续分析
-        existing_program_ids = get_all_available_program_ids()
-        
-        # 如果未指定程序ID，则获取所有有效的程序ID
-        if program_ids is None:
-            valid_program_ids = get_all_valid_program_ids()
-            if not valid_program_ids:
-                print("未找到有效的程序ID，分析中止。")
+        # 确定需要预处理的程序 和 分析的程序ID (analysis_program_ids)
+        if program_ids is None: # 如果没有指定程序，则分析所有有效的程序
+            all_valid_ids_from_source = get_all_valid_program_ids()
+            if not all_valid_ids_from_source:
+                print("未从原始数据中找到有效的程序ID，分析中止。")
                 return False
             
-            print(f"从原始数据中找到以下有效程序ID: {valid_program_ids}")
+            print(f"从原始数据中找到以下有效程序ID: {all_valid_ids_from_source}")
             
-            # 找出缺失的程序ID（在有效列表中但不在现有数据中）
-            missing_program_ids = [pid for pid in valid_program_ids if pid not in existing_program_ids]
-            
-            if missing_program_ids:
-                print(f"以下程序ID缺少处理过的数据，将为它们生成数据: {missing_program_ids}")
-                programs_to_preprocess = missing_program_ids
-                need_preprocess = True
-            else:
-                print("所有有效程序ID的数据都已存在，无需预处理。")
-                programs_to_preprocess = None
-                need_preprocess = False
-            
-            # 设置分析使用的程序ID为所有有效程序ID
-            analysis_program_ids = valid_program_ids
-        else:
-            # 如果指定了程序ID，检查哪些需要预处理
             if force_preprocess:
-                # 强制预处理所有指定的程序
+                need_preprocess = True
+                programs_to_preprocess = all_valid_ids_from_source
+            else:
+                # check_processed_data_exists 的第三个返回值在这里不太重要，因为我们主要关心哪些文件缺失
+                need_preprocess_check, missing_ids_for_all_valid, _ = check_processed_data_exists(all_valid_ids_from_source, False) # False for regenerate_summary as we handle it later
+                
+                if need_preprocess_check and missing_ids_for_all_valid:
+                    print(f"以下有效程序ID的数据文件缺失，将进行预处理: {missing_ids_for_all_valid}")
+                    programs_to_preprocess = missing_ids_for_all_valid
+                    need_preprocess = True
+                else:
+                    print("所有有效程序ID的数据文件均已存在。")
+                    programs_to_preprocess = None 
+                    need_preprocess = False 
+            
+            analysis_program_ids = all_valid_ids_from_source
+        
+        else: # 如果指定了程序ID
+            if force_preprocess:
                 need_preprocess = True
                 programs_to_preprocess = program_ids
             else:
-                # 检查哪些程序需要预处理
-                need_preprocess, programs_to_preprocess, _ = check_processed_data_exists(program_ids, regenerate_summary)
-            
-            # 设置分析使用的程序ID为指定的程序ID
-            analysis_program_ids = program_ids
-        
-        # 如果需要预处理
-        if need_preprocess:
-            print("\n1. PREPROCESSING DATA...")
-            if programs_to_preprocess:
-                print(f"仅预处理以下程序: {programs_to_preprocess}")
-            
-            valid_programs = preprocess_data(feedback_dir, programs_to_preprocess)
-            
-            if valid_programs.empty:
-                print("未找到指定ID的有效程序。分析中止。")
-                return False
-        else:
-            print("\n1. USING EXISTING PROCESSED DATA...")
-            # 读取有效项目信息
-            try:
-                # 如果需要重新生成汇总文件
-                if regenerate_summary:
-                    success, available_program_ids = regenerate_summary_files()
-                    if not success:
-                        print("重新生成汇总文件失败，使用现有文件继续分析")
-                
-                # 尝试读取所有程序数据
-                if os.path.exists('processed_data/all_programs_weekly.csv'):
-                    valid_programs = pd.read_csv('processed_data/all_programs_weekly.csv')
-                # 如果周数据不存在，尝试读取月数据
-                elif os.path.exists('processed_data/all_programs_monthly.csv'):
-                    valid_programs = pd.read_csv('processed_data/all_programs_monthly.csv')
+                need_preprocess_check, missing_ids_for_specified, _ = check_processed_data_exists(program_ids, False)
+                if need_preprocess_check and missing_ids_for_specified:
+                    print(f"以下指定的程序ID数据文件缺失，将进行预处理: {missing_ids_for_specified}")
+                    programs_to_preprocess = missing_ids_for_specified
+                    need_preprocess = True
                 else:
-                    # 如果只有单独的程序文件，则需要读取它们
-                    program_files = []
-                    for file in os.listdir('processed_data'):
-                        if file.startswith('program_') and ('weekly' in file or 'monthly' in file):
-                            program_files.append(os.path.join('processed_data', file))
-                    
-                    if not program_files:
-                        print("无法在processed_data目录中找到有效的数据文件。分析中止。")
-                        return False
-                    
-                    # 读取第一个文件以获取程序信息
-                    valid_programs = pd.read_csv(program_files[0])
-                
-                # 筛选特定程序ID
-                valid_programs = valid_programs[valid_programs['program_id'].isin(analysis_program_ids)]
-                
-                if valid_programs.empty:
-                    print("在已有数据中未找到有效程序。分析中止。")
-                    return False
-                    
-            except Exception as e:
-                print(f"读取已有的处理数据时出错: {e}")
+                    print("所有指定的程序ID的数据文件均已存在。")
+                    programs_to_preprocess = None
+                    need_preprocess = False
+            
+            analysis_program_ids = program_ids
+
+        # 数据预处理和汇总文件生成
+        if need_preprocess and programs_to_preprocess:
+            print("\n1. PREPROCESSING DATA...")
+            print(f"预处理以下程序: {programs_to_preprocess}")
+            
+            processed_df = preprocess_data(feedback_dir, programs_to_preprocess)
+            
+            if processed_df.empty:
+                print(f"为程序 {programs_to_preprocess} 进行预处理后未返回有效数据。分析中止。")
                 return False
+            
+            if regenerate_summary:
+                print("预处理完成，正在重新生成汇总文件以包含新数据...")
+                success_regen, _ = regenerate_summary_files()
+                if not success_regen:
+                    print("警告: 重新生成汇总文件失败。后续分析可能基于不完整或过时的汇总数据。")
+            else:
+                print("预处理完成。由于 regenerate_summary 为 False (可能通过 --no-summary-regen 设置)，未重新生成汇总文件。")
+                print("后续分析将使用现有的（可能过时的）汇总文件。")
+
+        elif not need_preprocess and regenerate_summary:
+            print("\n1. USING EXISTING PROCESSED DATA...")
+            print("不需要预处理。检查并重新生成汇总文件（如果 regenerate_summary 为 True）...")
+            success_regen, _ = regenerate_summary_files()
+            if not success_regen:
+                # 如果汇总文件不存在且重新生成失败，这是一个严重问题
+                if not (os.path.exists('processed_data/all_programs_weekly.csv') and os.path.exists('processed_data/all_programs_monthly.csv')):
+                    print("错误: 汇总文件不存在且重新生成失败。分析中止。")
+                    return False
+                print("警告: 重新生成汇总文件失败。后续分析将使用现有的汇总数据（如果存在）。")
+        
+        elif not need_preprocess and not regenerate_summary:
+            print("\n1. USING EXISTING PROCESSED DATA...")
+            print("不需要预处理，并且 regenerate_summary 为 False。将使用现有的汇总文件。")
+            # 确保汇总文件存在，因为我们不重新生成它们
+            if not (os.path.exists('processed_data/all_programs_weekly.csv') and os.path.exists('processed_data/all_programs_monthly.csv')):
+                print("错误: regenerate_summary 为 False，但必需的汇总文件缺失。请运行一次不带 --no-summary-regen 的分析，或确保汇总文件存在。分析中止。")
+                return False
+        
+        # 如果 need_preprocess 为 True 但 programs_to_preprocess 为空 (例如，强制预处理但未提供程序列表，或逻辑错误)
+        # 当前逻辑应该避免这种情况。为稳健起见，可以添加检查，但目前流程旨在防止这种情况。
+        elif need_preprocess and not programs_to_preprocess:
+             print("\n1. PREPROCESSING DATA...")
+             print("警告: 需要预处理，但没有指定要预处理的程序。这可能是一个逻辑错误。")
+             # 如果 regenerate_summary 为 True，仍然尝试更新汇总文件
+             if regenerate_summary:
+                print("尝试重新生成汇总文件...")
+                success_regen, _ = regenerate_summary_files()
+                if not success_regen and not (os.path.exists('processed_data/all_programs_weekly.csv') and os.path.exists('processed_data/all_programs_monthly.csv')):
+                    print("错误: 汇总文件不存在且重新生成失败。分析中止。")
+                    return False
+                elif not success_regen:
+                    print("警告: 重新生成汇总文件失败。")
         
         # Step 2: Basic statistical analysis
         print("\n2. RUNNING BASIC STATISTICAL ANALYSIS...")
@@ -370,6 +509,7 @@ def run_complete_analysis(feedback_dir, program_ids=None, force_preprocess=False
     
     except Exception as e:
         print(f"\nERROR: Analysis failed - {str(e)}")
+        traceback.print_exc() # 打印更详细的堆栈信息
         return False
 
 def clean_all_results():
@@ -425,7 +565,7 @@ def parse_arguments():
 
 if __name__ == "__main__":
     """
-    python run_analysis.py --programs 0 1 4 8 22 --feedback_dir similarity_threshold=0.35/
+    python run_analysis.py --programs 0 1 4 5 15 22  --feedback_dir similarity_threshold=0.35/
     python run_analysis.py --programs 0 1 4 8 22 --force-preprocess
     python run_analysis.py --programs 0 1 4 8 22 --no-summary-regen
     python run_analysis.py --clean
