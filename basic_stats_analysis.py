@@ -45,16 +45,16 @@ def analyze_program_stats(program_ids=None, processed_dir='processed_data'):
     if not os.path.exists('results'):
         os.makedirs('results')
     
-    # Get all weekly data files
+    # Get all daily data files
     if program_ids is not None:
         # 只获取指定项目的文件
-        weekly_files = [f'{processed_dir}/program_{pid}_weekly.csv' for pid in program_ids 
-                        if os.path.exists(f'{processed_dir}/program_{pid}_weekly.csv')]
-        if not weekly_files:
-            print("Warning: No weekly data files found for the specified program IDs")
+        daily_files = [f'{processed_dir}/program_{pid}_daily.csv' for pid in program_ids 
+                        if os.path.exists(f'{processed_dir}/program_{pid}_daily.csv')]
+        if not daily_files:
+            print("Warning: No daily data files found for the specified program IDs")
     else:
         # 获取所有项目的文件
-        weekly_files = glob.glob(f'{processed_dir}/program_*_weekly.csv')
+        daily_files = glob.glob(f'{processed_dir}/program_*_daily.csv')
     
     # Create summary dataframe for all program results
     summary_results = pd.DataFrame(columns=[
@@ -63,12 +63,15 @@ def analyze_program_stats(program_ids=None, processed_dir='processed_data'):
         'pre_std', 'post_std', 't_stat', 'p_value', 'significant_0.05'
     ])
     
+    # 收集所有项目的pre和post数据，用于创建总体density图
+    all_program_data = []
+    
     # 如果没有找到任何文件，提前返回空的摘要结果
-    if not weekly_files:
-        print("No weekly data files found for analysis")
+    if not daily_files:
+        print("No daily data files found for analysis")
         return summary_results
     
-    for file_path in weekly_files:
+    for file_path in daily_files:
         # Extract program ID from filename
         program_id = int(file_path.split('_')[-2])
         
@@ -128,8 +131,14 @@ def analyze_program_stats(program_ids=None, processed_dir='processed_data'):
             'significant_0.05': [significant]
         })], ignore_index=True)
         
-        # Create visualizations for this program
-        create_program_visualizations(df, program_id, program_name)
+        # 收集每个项目的密度图数据
+        if len(pre_data) >= 2 and len(post_data) >= 2:
+            all_program_data.append({
+                'program_id': program_id,
+                'program_name': program_name,
+                'pre_data': pre_data,
+                'post_data': post_data
+            })
         
         # Categorize sentiment (for Fisher/Chi-square tests)
         # Create sentiment categories (Positive: > 0.2, Neutral: -0.2 to 0.2, Negative: < -0.2)
@@ -245,172 +254,111 @@ def analyze_program_stats(program_ids=None, processed_dir='processed_data'):
     # Create visualizations for overall results
     create_overall_visualizations(summary_results)
     
+    # 创建总的密度图
+    create_overall_density_plot(all_program_data)
+    
     print("Basic statistical analysis completed")
     return summary_results
 
 def create_program_visualizations(df, program_id, program_name):
     """Create visualizations for a single program"""
-    # Ensure figures directory exists
+    # 不生成单个项目的可视化，按照用户要求，只需要生成总的可视化
+    pass
+
+def create_overall_density_plot(program_data_list):
+    """创建所有项目的综合密度图"""
+    if not program_data_list:
+        print("Warning: No data for overall density plot")
+        return
+        
+    # 确保figures目录存在
     if not os.path.exists('figures'):
         os.makedirs('figures')
     
-    # Time series plot with intervention point
-    plt.figure(figsize=(12, 6))
+    # 创建一个大图，包含所有项目的密度子图
+    n_programs = len(program_data_list)
+    n_cols = 3  # 每行3个子图
+    n_rows = (n_programs + n_cols - 1) // n_cols  # 计算需要的行数
     
-    # Check if a timestamp column exists in the dataframe
-    timestamp_col = None
-    for col in df.columns:
-        if col.lower() in ['timestamp', 'timestamps', 'date', 'datetime']:
-            timestamp_col = col
-            break
+    plt.figure(figsize=(15, 4 * n_rows))
     
-    # If timestamp column exists, use it for plotting
-    if timestamp_col and timestamp_col in df.columns and not df[timestamp_col].isna().all():
-        time_points = pd.to_datetime(df[timestamp_col]).dropna()
-        if len(time_points) == len(df['mean_sentiment']):
-            plt.plot(time_points, df['mean_sentiment'], marker='o', linestyle='-')
-            plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-            plt.xticks(rotation=45)
-        else:
-            plt.plot(df['time'], df['mean_sentiment'], marker='o', linestyle='-')
-    elif 'week' in df.columns:
-        time_points = [pd.to_datetime(w.split('/')[0]) for w in df['week'] if isinstance(w, str)]
-        if len(time_points) == len(df['mean_sentiment']):
-            plt.plot(time_points, df['mean_sentiment'], marker='o', linestyle='-')
-            plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-            plt.xticks(rotation=45)
-        else:
-            plt.plot(df['time'], df['mean_sentiment'], marker='o', linestyle='-')
-    else:
-        plt.plot(df['time'], df['mean_sentiment'], marker='o', linestyle='-')
-    
-    # Find intervention point
-    intervention_idx = df['post_intervention'].idxmax() if 1 in df['post_intervention'].values else None
-    if intervention_idx is not None:
-        if timestamp_col and timestamp_col in df.columns and not df[timestamp_col].isna().all():
-            intervention_time = pd.to_datetime(df.loc[intervention_idx, timestamp_col]) if not pd.isna(df.loc[intervention_idx, timestamp_col]) else df.loc[intervention_idx, 'time']
-            plt.axvline(x=intervention_time, color='r', linestyle='--', label='Intervention Point')
-        elif 'week' in df.columns:
-            intervention_time = pd.to_datetime(df.loc[intervention_idx, 'week'].split('/')[0]) if isinstance(df.loc[intervention_idx, 'week'], str) else df.loc[intervention_idx, 'time']
-            plt.axvline(x=intervention_time, color='r', linestyle='--', label='Intervention Point')
-        else:
-            plt.axvline(x=df.loc[intervention_idx, 'time'], color='r', linestyle='--', label='Intervention Point')
-    
-    plt.title(f'Program {program_id}: {program_name} - Sentiment Score Over Time')
-    plt.xlabel('Date' if (timestamp_col or 'week' in df.columns) else 'Time')
-    plt.ylabel('Mean Sentiment Score')
-    plt.legend()
-    plt.grid(True, alpha=0.3)
-    plt.tight_layout()
-    plt.savefig(f'figures/program_{program_id}_timeseries.png')
-    plt.close()
-    
-    # Box plot comparing pre and post intervention
-    plt.figure(figsize=(10, 6))
-    sns.boxplot(x='post_intervention', y='mean_sentiment', data=df, 
-                palette=['#1f77b4', '#ff7f0e'],
-                order=[0, 1])
-    plt.title(f'Program {program_id}: {program_name} - Pre vs Post Intervention Sentiment')
-    plt.xlabel('Post Intervention (0=No, 1=Yes)')
-    plt.ylabel('Mean Sentiment Score')
-    plt.grid(True, alpha=0.3)
-    plt.tight_layout()
-    plt.savefig(f'figures/program_{program_id}_boxplot.png')
-    plt.close()
-    
-    # Density plot comparing pre and post distributions
-    plt.figure(figsize=(10, 6))
-    
-    # Get pre and post data
-    pre_data = df[df['post_intervention'] == 0]['mean_sentiment']
-    post_data = df[df['post_intervention'] == 1]['mean_sentiment']
-    
-    # Only create density plot if we have enough data points
-    if len(pre_data) >= 2 and len(post_data) >= 2:
-        sns.kdeplot(pre_data, label='Pre-intervention', shade=True, alpha=0.5)
-        sns.kdeplot(post_data, label='Post-intervention', shade=True, alpha=0.5)
-        plt.title(f'Program {program_id}: {program_name} - Sentiment Distribution')
-        plt.xlabel('Mean Sentiment Score')
-        plt.ylabel('Density')
+    for i, program in enumerate(program_data_list):
+        plt.subplot(n_rows, n_cols, i+1)
+        
+        # 绘制密度图
+        sns.kdeplot(program['pre_data'], label='前干预', shade=True, alpha=0.5)
+        sns.kdeplot(program['post_data'], label='后干预', shade=True, alpha=0.5)
+        
+        plt.title(f"{program['program_name']}")
+        plt.xlabel('情感得分')
+        plt.ylabel('密度')
         plt.legend()
         plt.grid(True, alpha=0.3)
-        plt.tight_layout()
-        plt.savefig(f'figures/program_{program_id}_density.png')
+    
+    plt.tight_layout()
+    plt.savefig('figures/overall_density_plots.png')
     plt.close()
 
 def create_overall_visualizations(summary_df):
-    """Create visualizations for overall results across all programs"""
+    """创建整体可视化：融合均值差异条形图和前后对比散点图"""
     if len(summary_df) == 0:
         print("Warning: No data for overall visualizations")
         return
     
-    # Bar plot of mean sentiment differences (sorted)
-    plt.figure(figsize=(14, 8))
-    # Sort by mean difference
-    sorted_df = summary_df.sort_values('mean_diff')
-    # Create bar plot
-    bars = plt.bar(sorted_df['program_name'], sorted_df['mean_diff'], 
-                   color=[('green' if x > 0 else 'red') for x in sorted_df['mean_diff']])
+    # 确保figures目录存在
+    if not os.path.exists('figures'):
+        os.makedirs('figures')
     
-    # Add significance markers
+    # 创建一个1行2列的子图布局
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 8))
+    
+    # 第一个子图：均值差异条形图
+    # 按均值差异排序
+    sorted_df = summary_df.sort_values('mean_diff')
+    
+    # 创建条形图
+    bars = ax1.bar(sorted_df['program_name'], sorted_df['mean_diff'], 
+             color=[('green' if x > 0 else 'red') for x in sorted_df['mean_diff']])
+    
+    # 添加统计显著性标记
     for i, significant in enumerate(sorted_df['significant_0.05']):
         if significant:
-            plt.text(i, sorted_df['mean_diff'].iloc[i], '*', 
-                     ha='center', va='bottom' if sorted_df['mean_diff'].iloc[i] > 0 else 'top', 
-                     fontsize=20)
+            ax1.text(i, sorted_df['mean_diff'].iloc[i], '*', 
+                 ha='center', va='bottom' if sorted_df['mean_diff'].iloc[i] > 0 else 'top', 
+                 fontsize=20)
     
-    plt.title('Mean Sentiment Difference by Program (Post - Pre)')
-    plt.xlabel('Service Program')
-    plt.ylabel('Mean Sentiment Difference')
-    plt.axhline(y=0, color='black', linestyle='-', alpha=0.3)
-    plt.grid(axis='y', alpha=0.3)
-    plt.xticks(rotation=90)
-    plt.tight_layout()
-    plt.savefig('figures/overall_mean_diff_barplot.png')
-    plt.close()
+    ax1.set_title('各项目情感均值变化(后-前)')
+    ax1.set_xlabel('服务项目')
+    ax1.set_ylabel('情感均值差异')
+    ax1.axhline(y=0, color='black', linestyle='-', alpha=0.3)
+    ax1.grid(axis='y', alpha=0.3)
+    ax1.set_xticklabels(sorted_df['program_name'], rotation=90)
     
-    # Plot pre vs post means as a scatter plot
-    plt.figure(figsize=(10, 8))
-    plt.scatter(summary_df['pre_mean'], summary_df['post_mean'], 
-                c=['green' if x else 'red' for x in summary_df['significant_0.05']], 
-                alpha=0.7, s=100)
+    # 第二个子图：前后散点图对比
+    ax2.scatter(summary_df['pre_mean'], summary_df['post_mean'], 
+              c=['green' if x else 'red' for x in summary_df['significant_0.05']], 
+              alpha=0.7, s=100)
     
-    # Add program labels
+    # 添加项目标签
     for i, row in summary_df.iterrows():
-        plt.annotate(f"Program {row['program_id']}", 
-                    (row['pre_mean'], row['post_mean']),
-                    xytext=(5, 5), textcoords='offset points')
+        ax2.annotate(f"Program {row['program_id']}", 
+                  (row['pre_mean'], row['post_mean']),
+                  xytext=(5, 5), textcoords='offset points')
     
-    # Add diagonal line (no change)
+    # 添加对角线（表示无变化）
     min_val = min(summary_df['pre_mean'].min(), summary_df['post_mean'].min())
     max_val = max(summary_df['pre_mean'].max(), summary_df['post_mean'].max())
-    plt.plot([min_val, max_val], [min_val, max_val], 'k--', alpha=0.5)
+    ax2.plot([min_val, max_val], [min_val, max_val], 'k--', alpha=0.5)
     
-    plt.title('Pre vs Post Intervention Mean Sentiment')
-    plt.xlabel('Pre-Intervention Mean')
-    plt.ylabel('Post-Intervention Mean')
-    plt.grid(True, alpha=0.3)
-    plt.tight_layout()
-    plt.savefig('figures/pre_vs_post_mean_scatter.png')
-    plt.close()
+    ax2.set_title('干预前后情感均值对比')
+    ax2.set_xlabel('干预前均值')
+    ax2.set_ylabel('干预后均值')
+    ax2.grid(True, alpha=0.3)
     
-    # Plot p-values
-    plt.figure(figsize=(12, 8))
-    # Sort by p-value
-    sorted_p = summary_df.sort_values('p_value')
-    plt.bar(sorted_p['program_name'], sorted_p['p_value'], 
-            color=['green' if x < 0.05 else 'gray' for x in sorted_p['p_value']])
-    plt.axhline(y=0.05, color='red', linestyle='--', alpha=0.7, label='Significance threshold (p=0.05)')
-    plt.title('P-values by Program')
-    plt.xlabel('Service Program')
-    plt.ylabel('P-value (t-test)')
-    plt.legend()
-    plt.xticks(rotation=90)
-    plt.grid(axis='y', alpha=0.3)
     plt.tight_layout()
-    plt.savefig('figures/overall_pvalues.png')
+    plt.savefig('figures/combined_mean_diff_and_scatter.png')
     plt.close()
 
 if __name__ == "__main__":
     summary_results = analyze_program_stats()
-    print(f"Analysis complete. Results saved to 'results' and 'figures' directories.")
+    print(f"分析完成。结果已保存至'results'和'figures'目录。")
