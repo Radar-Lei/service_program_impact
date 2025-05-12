@@ -25,6 +25,228 @@ else:  # Windows or other systems
 # Universal settings
 plt.rcParams['axes.unicode_minus'] = False  # For displaying negative signs properly
 
+def create_combined_visualization(all_results):
+    """Create a combined visualization for all programs with ITS and placebo results
+    
+    Args:
+        all_results (list): List of tuples containing (df, model, model_name, program_id, program_name, placebo_results)
+    """
+    try:
+        # Calculate the number of rows and columns for subplots
+        n_programs = len(all_results)
+        
+        # 优化排列方式：如果是4个项目，使用2×2布局
+        if n_programs == 4:
+            n_cols = 2
+            n_rows = 2
+        else:
+            # 对于其他数量，计算合适的行列数
+            n_cols = min(3, n_programs)  # Maximum 3 columns
+            n_rows = (n_programs + n_cols - 1) // n_cols  # Ceiling division
+        
+        # Create figure with subplots
+        fig = plt.figure(figsize=(7*n_cols, 6*n_rows))
+        
+        for idx, (df, model, model_name, program_id, program_name, placebo_results) in enumerate(all_results, 1):
+            # Create subplot
+            ax = plt.subplot(n_rows, n_cols, idx)
+            
+            # Get clean data
+            required_cols = ['mean_sentiment', 'time', 'post_intervention', 'time_since_intervention']
+            clean_df = df[required_cols].dropna().reset_index(drop=True)
+            
+            if len(clean_df) < 10:
+                continue
+            
+            # Get time points for display
+            timestamp_col = None
+            for col in df.columns:
+                if col.lower() in ['timestamp', 'timestamps', 'date', 'datetime']:
+                    timestamp_col = col
+                    break
+            
+            # Prepare time points for display
+            if timestamp_col and timestamp_col in df.columns and not df[timestamp_col].isna().all():
+                time_points_display = pd.to_datetime(df[timestamp_col]).dropna()
+                if len(time_points_display) == len(clean_df):
+                    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+                    plt.xticks(rotation=45)
+                else:
+                    time_points_display = clean_df['time']
+            elif 'week' in df.columns:
+                try:
+                    dates = []
+                    for w in df['week']:
+                        if isinstance(w, str) and '/' in w:
+                            dates.append(pd.to_datetime(w.split('/')[0]))
+                        else:
+                            dates.append(None)
+                    time_points_display = pd.Series(dates).dropna()
+                    if len(time_points_display) == len(clean_df):
+                        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+                        plt.xticks(rotation=45)
+                    else:
+                        time_points_display = clean_df['time']
+                except:
+                    time_points_display = clean_df['time']
+            else:
+                time_points_display = clean_df['time']
+            
+            # Get observed and predicted values
+            observed = clean_df['mean_sentiment']
+            if hasattr(model, 'fittedvalues'):
+                predicted = model.fittedvalues
+            else:
+                try:
+                    predicted = model.predict()
+                except:
+                    continue
+            
+            # Ensure alignment
+            min_len = min(len(clean_df), len(predicted))
+            observed = observed[:min_len]
+            predicted = predicted[:min_len]
+            if isinstance(time_points_display, pd.Series):
+                time_points_display = time_points_display.iloc[:min_len]
+            else:
+                time_points_display = time_points_display[:min_len]
+            
+            # Plot observed values
+            ax.scatter(time_points_display, observed, color='blue', alpha=0.6, label='观察值', s=20)
+            
+            # Plot fitted values
+            ax.plot(time_points_display, predicted, 'r-', linewidth=1.5, label='拟合值')
+            
+            # Find and plot intervention point
+            intervention_idx = np.argmax(clean_df['post_intervention'].values) if 1 in clean_df['post_intervention'].values else None
+            if intervention_idx is not None:
+                intervention_time = time_points_display.iloc[intervention_idx] if isinstance(time_points_display, pd.Series) else time_points_display[intervention_idx]
+                ax.axvline(x=intervention_time, color='green', linestyle='--', label='干预点')
+            
+            # Plot trend lines if available
+            try:
+                if intervention_idx is not None and 'Segmented Regression' in model_name:
+                    # 获取模型参数
+                    intercept = model.params['Intercept']
+                    time_coef = model.params['time']
+                    level_change = model.params['post_intervention']
+                    trend_change = model.params['time_since_intervention']
+                    
+                    # 分别找到干预前后的数据点
+                    pre_data = clean_df[clean_df['post_intervention'] == 0]
+                    post_data = clean_df[clean_df['post_intervention'] == 1]
+                    
+                    # 输出调试信息
+                    print(f"Program {program_id}: pre_data={len(pre_data)}, post_data={len(post_data)}")
+                    
+                    # 干预前趋势线 - 只使用两个点绘制直线
+                    if len(pre_data) >= 2:
+                        pre_start_time = pre_data['time'].iloc[0]
+                        pre_end_time = pre_data['time'].iloc[-1]
+                        
+                        # 计算这两个点对应的y值
+                        pre_start_y = intercept + time_coef * pre_start_time
+                        pre_end_y = intercept + time_coef * pre_end_time
+                        
+                        # 找到对应的显示时间点
+                        pre_start_idx = pre_data.index[0]
+                        pre_end_idx = pre_data.index[-1]
+                        
+                        if isinstance(time_points_display, pd.Series):
+                            if pre_start_idx < len(time_points_display) and pre_end_idx < len(time_points_display):
+                                pre_start_display = time_points_display.iloc[pre_start_idx]
+                                pre_end_display = time_points_display.iloc[pre_end_idx]
+                                
+                                # 绘制干预前趋势线
+                                ax.plot([pre_start_display, pre_end_display], 
+                                        [pre_start_y, pre_end_y], 
+                                        'b--', linewidth=1, label='干预前趋势')
+                        else:
+                            if pre_start_idx < len(time_points_display) and pre_end_idx < len(time_points_display):
+                                pre_start_display = time_points_display[pre_start_idx]
+                                pre_end_display = time_points_display[pre_end_idx]
+                                
+                                # 绘制干预前趋势线
+                                ax.plot([pre_start_display, pre_end_display], 
+                                        [pre_start_y, pre_end_y], 
+                                        'b--', linewidth=1, label='干预前趋势')
+                    
+                    # 干预后趋势线 - 只使用两个点绘制直线
+                    if len(post_data) >= 2:
+                        post_start_time = post_data['time'].iloc[0]
+                        post_end_time = post_data['time'].iloc[-1]
+                        post_start_since = post_data['time_since_intervention'].iloc[0]
+                        post_end_since = post_data['time_since_intervention'].iloc[-1]
+                        
+                        # 计算这两个点对应的y值 
+                        post_start_y = intercept + level_change + time_coef * post_start_time + trend_change * post_start_since
+                        post_end_y = intercept + level_change + time_coef * post_end_time + trend_change * post_end_since
+                        
+                        # 找到对应的显示时间点
+                        post_start_idx = post_data.index[0]
+                        post_end_idx = post_data.index[-1]
+                        
+                        # 输出调试信息
+                        print(f"Program {program_id}: post_start_idx={post_start_idx}, post_end_idx={post_end_idx}, len(time_points_display)={len(time_points_display)}")
+                        print(f"post_start_time={post_start_time}, post_end_time={post_end_time}")
+                        print(f"post_start_y={post_start_y}, post_end_y={post_end_y}")
+                        
+                        # 尝试不同的方法绘制干预后趋势线
+                        # 方法1: 使用时间点直接计算趋势线
+                        x = np.array([post_start_time, post_end_time])
+                        y = np.array([post_start_y, post_end_y])
+                        
+                        # 寻找最近的显示时间点
+                        if isinstance(time_points_display, pd.Series):
+                            x_display = [time_points_display.iloc[intervention_idx], time_points_display.iloc[-1]]
+                        else:
+                            x_display = [time_points_display[intervention_idx], time_points_display[-1]]
+                        
+                        # 绘制干预后趋势线 - 使用干预点和最后一个点
+                        ax.plot(x_display, y, 'g--', linewidth=1, label='干预后趋势')
+            except Exception as e:
+                print(f"Warning: Could not plot trend lines for program {program_id}: {str(e)}")
+            
+            # Add placebo lines if available
+            if placebo_results:
+                try:
+                    actual_model = fit_segmented_regression(clean_df)
+                    actual_trend_p = actual_model.pvalues['time_since_intervention']
+                    
+                    # Get pre-intervention data
+                    pre_data = clean_df[clean_df['post_intervention'] == 0]
+                    if len(pre_data) > 5:
+                        # Select placebo point at 25% of pre-intervention period
+                        placebo_idx = int(len(pre_data) * 0.25)
+                        placebo_time = pre_data.iloc[placebo_idx]['time']
+                        placebo_time_display = time_points_display.iloc[placebo_idx] if isinstance(time_points_display, pd.Series) else time_points_display[placebo_idx]
+                        ax.axvline(x=placebo_time_display, color='gray', linestyle=':', alpha=0.7,
+                                  label=f'Placebo (p={placebo_results[0]:.3f})')
+                except Exception as e:
+                    print(f"Warning: Could not plot placebo line for program {program_id}: {str(e)}")
+            
+            # Add title and labels
+            ax.set_title(f'项目 {program_id}: {program_name}\n{model_name}', fontsize=10)
+            ax.set_xlabel('日期' if timestamp_col else '时间', fontsize=8)
+            ax.set_ylabel('情感评分均值', fontsize=8)
+            ax.tick_params(axis='both', which='major', labelsize=8)
+            ax.grid(True, alpha=0.3)
+            
+            # Add legend with smaller font
+            handles, labels = ax.get_legend_handles_labels()
+            ax.legend(handles, labels, loc='best', fontsize=7)
+        
+        # Adjust layout
+        plt.tight_layout()
+        
+        # Save figure
+        plt.savefig('figures/its/combined_its_analysis.png', dpi=300, bbox_inches='tight')
+        plt.close()
+        
+    except Exception as e:
+        print(f"Warning: Combined visualization failed: {str(e)}")
+        return
+
 def run_its_analysis(program_ids=None, processed_dir='processed_data'):
     """Run Interrupted Time Series (ITS) analysis for each service program
     
@@ -67,6 +289,9 @@ def run_its_analysis(program_ids=None, processed_dir='processed_data'):
         print("No weekly data files found for ITS analysis")
         return its_summary
     
+    # Store results for combined visualization
+    all_results = []
+    
     for file_path in weekly_files:
         # Extract program ID from filename
         program_id = int(file_path.split('_')[-2])
@@ -92,10 +317,16 @@ def run_its_analysis(program_ids=None, processed_dir='processed_data'):
         
         try:
             # Run ITS analysis for this program
-            result_dict = analyze_single_program(df, program_id, program_name)
+            result_dict, best_model, best_model_name = analyze_single_program(df, program_id, program_name)
             
             # Add results to summary
             its_summary = pd.concat([its_summary, pd.DataFrame([result_dict])], ignore_index=True)
+            
+            # Run placebo test
+            placebo_results = run_placebo_test(df, program_id, program_name)
+            
+            # Store results for combined visualization
+            all_results.append((df, best_model, best_model_name, program_id, program_name, placebo_results))
             
         except Exception as e:
             print(f"Error analyzing program {program_id}: {e}")
@@ -106,8 +337,12 @@ def run_its_analysis(program_ids=None, processed_dir='processed_data'):
         ascending=[False, False]
     )
     
-    # Save summary results
-    its_summary.to_csv('results/its/its_summary.csv', index=False)
+    # Save summary results - Commented out as per user request
+    # its_summary.to_csv('results/its/its_summary.csv', index=False)
+    
+    # Create combined visualization
+    if all_results:
+        create_combined_visualization(all_results)
     
     print("ITS analysis completed")
     return its_summary
@@ -212,10 +447,7 @@ def analyze_single_program(df, program_id, program_name):
     r_squared = best_model.rsquared if hasattr(best_model, 'rsquared') else np.nan
     aic = best_model.aic if hasattr(best_model, 'aic') else np.nan
     
-    # Create visualization
-    create_its_visualization(df, best_model, best_model_name, program_id, program_name)
-    
-    # Perform placebo test
+    # Run placebo test
     placebo_results = run_placebo_test(df, program_id, program_name)
     
     # Save model summary and placebo results
@@ -232,14 +464,21 @@ def analyze_single_program(df, program_id, program_name):
         f.write(f"R-squared: {r_squared:.4f}\n")
         f.write(f"AIC: {aic:.2f}\n")
         f.write(f"Sample size: {len(df)}\n\n")
-        
         f.write(f"Placebo Test Results:\n")
         f.write(f"Real intervention p-value (trend change): {trend_p:.4f}\n")
-        f.write(f"Placebo p-values (trend change): {', '.join([f'{p:.4f}' for p in placebo_results])}\n")
-        f.write(f"Placebo test passed: {all(p > trend_p for p in placebo_results)}\n\n")
+        if placebo_results:
+            f.write(f"Placebo p-values (trend change):\n")
+            for i, p_val in enumerate(placebo_results, 1):
+                f.write(f"  Placebo Test {i}: {p_val:.4f}\n")
+            # Determine if placebo test passed (pass if all placebo p-values are >= 0.05)
+            passed = all(p_val >= 0.05 for p_val in placebo_results)
+            f.write(f"Placebo test passed: {'Pass' if passed else 'Fail'}\n")
+        else:
+            f.write(f"Placebo p-values (trend change): Not available\n")
+            f.write(f"Placebo test passed: Not available\n")
         
         if hasattr(best_model, 'summary'):
-            f.write("\nFull Model Summary:\n")
+            f.write("\n\nFull Model Summary:\n")
             f.write(str(best_model.summary()))
     
     # Create result dictionary
@@ -260,7 +499,7 @@ def analyze_single_program(df, program_id, program_name):
         'sample_size': len(df)
     }
     
-    return result_dict
+    return result_dict, best_model, best_model_name
 
 def fit_segmented_regression(df, ar_terms=0):
     """Fit segmented regression model, optionally with autoregressive terms"""
@@ -343,179 +582,6 @@ def fit_arima_model(df, order=(1,0,0), seasonal_order=None):
         print(f"Warning: ARIMA/SARIMA model fitting failed: {str(e)}")
         return None
 
-def create_its_visualization(df, model, model_name, program_id, program_name):
-    """Create visualization for ITS analysis results"""
-    try:
-        # 首先确保有完整的可视化数据
-        required_cols = ['mean_sentiment', 'time', 'post_intervention', 'time_since_intervention']
-        clean_df = df[required_cols].dropna().reset_index(drop=True)
-        
-        if len(clean_df) < 10:
-            print(f"Warning: Insufficient data for visualization for program {program_id}")
-            return
-        
-        # 获取观察值
-        time_points = np.array(clean_df['time'])
-        observed = clean_df['mean_sentiment']
-        
-        # 检查时间戳列用于显示目的
-        timestamp_col = None
-        for col in df.columns:
-            if col.lower() in ['timestamp', 'timestamps', 'date', 'datetime']:
-                timestamp_col = col
-                break
-        
-        # 准备用于显示的时间点
-        if timestamp_col and timestamp_col in df.columns and not df[timestamp_col].isna().all():
-            time_points_display = pd.to_datetime(df[timestamp_col]).dropna()
-            if len(time_points_display) == len(clean_df):
-                plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-                plt.xticks(rotation=45)
-            else:
-                # 如果长度不匹配，回退到使用数值时间点
-                time_points_display = time_points
-        elif 'week' in df.columns:
-            try:
-                dates = []
-                for w in df['week']:
-                    if isinstance(w, str) and '/' in w:
-                        dates.append(pd.to_datetime(w.split('/')[0]))
-                    else:
-                        dates.append(None)
-                time_points_display = pd.Series(dates).dropna()
-                if len(time_points_display) == len(clean_df):
-                    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-                    plt.xticks(rotation=45)
-                else:
-                    # 如果长度不匹配，回退到使用数值时间点
-                    time_points_display = time_points
-            except:
-                time_points_display = time_points
-        else:
-            time_points_display = time_points
-        
-        # 获取预测值
-        if hasattr(model, 'fittedvalues'):
-            predicted = model.fittedvalues
-            # 确保预测值与观察数据点对齐
-            if len(predicted) != len(clean_df):
-                print(f"Warning: Dimension mismatch in visualization. Using only aligned data points.")
-                # 找到最小公共长度
-                min_len = min(len(clean_df), len(predicted))
-                observed = observed[:min_len]
-                time_points = time_points[:min_len]
-                predicted = predicted[:min_len]
-                # 调整display时间点
-                if isinstance(time_points_display, pd.Series) and len(time_points_display) > min_len:
-                    time_points_display = time_points_display[:min_len]
-                elif not isinstance(time_points_display, pd.Series):
-                    time_points_display = time_points_display[:min_len]
-        else:
-            # 对于ARIMA模型，在我们的清洁数据上预测
-            try:
-                predicted = model.predict()
-                # 检查维度并在需要时对齐
-                if len(predicted) != len(clean_df):
-                    min_len = min(len(clean_df), len(predicted))
-                    observed = observed[:min_len]
-                    time_points = time_points[:min_len]
-                    predicted = predicted[:min_len]
-                    # 调整display时间点
-                    if isinstance(time_points_display, pd.Series) and len(time_points_display) > min_len:
-                        time_points_display = time_points_display[:min_len]
-                    elif not isinstance(time_points_display, pd.Series):
-                        time_points_display = time_points_display[:min_len]
-            except Exception as e:
-                print(f"Warning: Could not get predictions for visualization: {str(e)}")
-                return
-        
-        # 找到干预点
-        intervention_idx = np.argmax(clean_df['post_intervention'].values) if 1 in clean_df['post_intervention'].values else None
-        intervention_time = clean_df.loc[intervention_idx, 'time'] if intervention_idx is not None else None
-        
-        # 获取干预点的显示时间
-        if intervention_idx is not None:
-            if isinstance(time_points_display, pd.Series) and intervention_idx < len(time_points_display):
-                intervention_time_display = time_points_display.iloc[intervention_idx]
-            elif not isinstance(time_points_display, pd.Series) and intervention_idx < len(time_points_display):
-                intervention_time_display = time_points_display[intervention_idx]
-            else:
-                intervention_time_display = intervention_time
-        else:
-            intervention_time_display = None
-        
-        # 创建图形
-        plt.figure(figsize=(12, 8))
-        
-        # 绘制观察值
-        if isinstance(time_points_display, pd.Series):
-            plt.scatter(time_points_display.iloc[:len(observed)], observed, color='blue', alpha=0.6, label='观察值')
-        else:
-            plt.scatter(time_points_display[:len(observed)], observed, color='blue', alpha=0.6, label='观察值')
-        
-        # 绘制拟合值
-        if isinstance(time_points_display, pd.Series):
-            plt.plot(time_points_display.iloc[:len(predicted)], predicted, 'r-', linewidth=2, label='拟合值')
-        else:
-            plt.plot(time_points_display[:len(predicted)], predicted, 'r-', linewidth=2, label='拟合值')
-        
-        # 添加干预点的垂直线
-        if intervention_time_display is not None:
-            plt.axvline(x=intervention_time_display, color='green', linestyle='--', 
-                       label='干预点')
-        
-        # 添加趋势线（干预前后）
-        try:
-            # 确保我们有干预点
-            if intervention_idx is not None and 'Segmented Regression' in model_name:
-                # 直接计算趋势线
-                pre_trend = model.params['Intercept'] + model.params['time'] * time_points
-                post_slope = model.params['time'] + model.params['time_since_intervention']
-                post_intercept = model.params['Intercept'] + model.params['post_intervention']
-                post_trend = post_intercept + post_slope * (time_points - intervention_time)
-                
-                # 创建前后干预的掩码
-                pre_mask = clean_df['post_intervention'].values == 0
-                post_mask = clean_df['post_intervention'].values == 1
-                
-                # 确保掩码长度正确
-                pre_mask = pre_mask[:len(time_points)]
-                post_mask = post_mask[:len(time_points)]
-                
-                # 仅绘制相关时间段的趋势
-                if isinstance(time_points_display, pd.Series):
-                    time_display_pre = time_points_display.iloc[:len(time_points)][pre_mask]
-                    time_display_post = time_points_display.iloc[:len(time_points)][post_mask]
-                else:
-                    time_display_pre = time_points_display[:len(time_points)][pre_mask]
-                    time_display_post = time_points_display[:len(time_points)][post_mask]
-                
-                plt.plot(time_display_pre, pre_trend[pre_mask], 'b--', linewidth=2, label='干预前趋势线')
-                plt.plot(time_display_post, post_trend[post_mask], 'g--', linewidth=2, label='干预后趋势线')
-            
-            elif intervention_idx is not None:
-                # 对于其他模型类型（如ARIMA），使用近似方法
-                pass  # 这里可以添加ARIMA模型的趋势线计算
-                
-        except Exception as e:
-            print(f"Warning: Could not plot trend lines: {str(e)}")
-        
-        # 添加标签和标题
-        plt.title(f'Program {program_id}: {program_name} - ITS Analysis\nModel: {model_name}')
-        plt.xlabel('日期' if timestamp_col else '时间')
-        plt.ylabel('情感评分均值')
-        plt.legend()
-        plt.grid(True, alpha=0.3)
-        plt.tight_layout()
-        
-        # 保存图形
-        plt.savefig(f'figures/its/program_{program_id}_its.png')
-        plt.close()
-        
-    except Exception as e:
-        print(f"Warning: Visualization failed for program {program_id}: {str(e)}")
-        return
-
 def run_placebo_test(df, program_id, program_name, num_placebos=3):
     """Run placebo tests with fake intervention points"""
     try:
@@ -562,19 +628,10 @@ def run_placebo_test(df, program_id, program_name, num_placebos=3):
                 plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
                 plt.xticks(rotation=45)
         
-        # Create figure for placebo comparisons
-        plt.figure(figsize=(12, 8))
-        
         # Get actual model
         try:
             actual_model = fit_segmented_regression(clean_df)
             actual_trend_p = actual_model.pvalues['time_since_intervention']
-            
-            # Plot actual data and intervention
-            plt.scatter(time_points, clean_df['mean_sentiment'], color='blue', alpha=0.3, label='Observed data')
-            actual_time_display = time_points.iloc[actual_idx] if isinstance(time_points, pd.Series) else time_points[actual_idx]
-            plt.axvline(x=actual_time_display, color='red', linestyle='-', 
-                       linewidth=2, label='Actual intervention')
             
             # Run analysis with each placebo point
             for i, idx in enumerate(placebo_idxs):
@@ -593,12 +650,6 @@ def run_placebo_test(df, program_id, program_name, num_placebos=3):
                     placebo_model = smf.ols(formula=formula, data=placebo_df).fit()
                     placebo_p = placebo_model.pvalues['placebo_time_since']
                     placebo_p_values.append(placebo_p)
-                    
-                    # Plot placebo intervention line
-                    placebo_time_display = time_points.iloc[idx] if isinstance(time_points, pd.Series) else time_points[idx]
-                    plt.axvline(x=placebo_time_display, color='gray', linestyle='--', alpha=0.7,
-                               label=f'Placebo {i+1} (p={placebo_p:.4f})')
-                    
                 except Exception as e:
                     print(f"Warning: Placebo model {i+1} fitting failed for program {program_id}: {str(e)}")
         except Exception as e:
@@ -607,18 +658,6 @@ def run_placebo_test(df, program_id, program_name, num_placebos=3):
     except Exception as e:
         print(f"Warning: Placebo test initialization failed for program {program_id}: {str(e)}")
         return []
-    
-    # Add legend and labels
-    plt.title(f'Program {program_id}: {program_name} - Placebo Test\nActual p-value: {actual_trend_p:.4f}')
-    plt.xlabel('日期' if timestamp_col else '时间')
-    plt.ylabel('Mean Sentiment Score')
-    plt.legend()
-    plt.grid(True, alpha=0.3)
-    plt.tight_layout()
-    
-    # Save figure
-    plt.savefig(f'figures/its/program_{program_id}_placebo.png')
-    plt.close()
     
     return placebo_p_values
 
