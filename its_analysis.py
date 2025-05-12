@@ -112,16 +112,16 @@ def create_combined_visualization(all_results):
                 time_points_display = time_points_display[:min_len]
             
             # Plot observed values
-            ax.scatter(time_points_display, observed, color='blue', alpha=0.6, label='观察值', s=20)
+            ax.scatter(time_points_display, observed, color='blue', alpha=0.6, label='Observed', s=20)
             
             # Plot fitted values
-            ax.plot(time_points_display, predicted, 'r-', linewidth=1.5, label='拟合值')
+            ax.plot(time_points_display, predicted, 'r-', linewidth=1.5, label='Fitted')
             
             # Find and plot intervention point
             intervention_idx = np.argmax(clean_df['post_intervention'].values) if 1 in clean_df['post_intervention'].values else None
             if intervention_idx is not None:
                 intervention_time = time_points_display.iloc[intervention_idx] if isinstance(time_points_display, pd.Series) else time_points_display[intervention_idx]
-                ax.axvline(x=intervention_time, color='green', linestyle='--', label='干预点')
+                ax.axvline(x=intervention_time, color='green', linestyle='--', label='Intervention')
             
             # Plot trend lines if available
             try:
@@ -157,19 +157,19 @@ def create_combined_visualization(all_results):
                                 pre_start_display = time_points_display.iloc[pre_start_idx]
                                 pre_end_display = time_points_display.iloc[pre_end_idx]
                                 
-                                # 绘制干预前趋势线
+                                # Plot pre-intervention trend line
                                 ax.plot([pre_start_display, pre_end_display], 
                                         [pre_start_y, pre_end_y], 
-                                        'b--', linewidth=1, label='干预前趋势')
+                                        'b--', linewidth=1, label='Pre-Intervention Trend')
                         else:
                             if pre_start_idx < len(time_points_display) and pre_end_idx < len(time_points_display):
                                 pre_start_display = time_points_display[pre_start_idx]
                                 pre_end_display = time_points_display[pre_end_idx]
                                 
-                                # 绘制干预前趋势线
+                                # Plot pre-intervention trend line
                                 ax.plot([pre_start_display, pre_end_display], 
                                         [pre_start_y, pre_end_y], 
-                                        'b--', linewidth=1, label='干预前趋势')
+                                        'b--', linewidth=1, label='Pre-Intervention Trend')
                     
                     # 干预后趋势线 - 只使用两个点绘制直线
                     if len(post_data) >= 2:
@@ -202,8 +202,8 @@ def create_combined_visualization(all_results):
                         else:
                             x_display = [time_points_display[intervention_idx], time_points_display[-1]]
                         
-                        # 绘制干预后趋势线 - 使用干预点和最后一个点
-                        ax.plot(x_display, y, 'g--', linewidth=1, label='干预后趋势')
+                        # Plot post-intervention trend line - using intervention point and last point
+                        ax.plot(x_display, y, 'g--', linewidth=1, label='Post-Intervention Trend')
             except Exception as e:
                 print(f"Warning: Could not plot trend lines for program {program_id}: {str(e)}")
             
@@ -226,9 +226,9 @@ def create_combined_visualization(all_results):
                     print(f"Warning: Could not plot placebo line for program {program_id}: {str(e)}")
             
             # Add title and labels
-            ax.set_title(f'项目 {program_id}: {program_name}\n{model_name}', fontsize=10)
-            ax.set_xlabel('日期' if timestamp_col else '时间', fontsize=8)
-            ax.set_ylabel('情感评分均值', fontsize=8)
+            ax.set_title(f'Program {program_id}: {program_name}\n{model_name}', fontsize=10)
+            ax.set_xlabel('Date' if timestamp_col else 'Time', fontsize=8)
+            ax.set_ylabel('Mean Sentiment Score', fontsize=8)
             ax.tick_params(axis='both', which='major', labelsize=8)
             ax.grid(True, alpha=0.3)
             

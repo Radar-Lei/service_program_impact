@@ -297,7 +297,7 @@ def create_program_visualizations(df, program_id, program_name):
             plt.axvline(x=df.loc[intervention_idx, 'time'], color='r', linestyle='--', label='Intervention Point')
     
     plt.title(f'Program {program_id}: {program_name} - Sentiment Score Over Time')
-    plt.xlabel('日期' if (timestamp_col or 'week' in df.columns) else '时间点')
+    plt.xlabel('Date' if (timestamp_col or 'week' in df.columns) else 'Time')
     plt.ylabel('Mean Sentiment Score')
     plt.legend()
     plt.grid(True, alpha=0.3)

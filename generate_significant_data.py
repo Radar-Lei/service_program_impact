@@ -331,7 +331,7 @@ def create_custom_program_data(program_id):
             level_change=0.01,          # 显著水平提升
             trend_change=0.002,        # 显著趋势改善
             noise_level=0.1,          # 中等噪声
-            seasonality=0.05,          # 轻微季节性
+            seasonality=0.03,          # 轻微季节性
             autocorr=0.15,
             signal_to_noise=0.5        # 降低信噪比，产生更低的R^2
         )
@@ -397,7 +397,7 @@ def create_custom_program_daily_data(program_id):
             trend_change=0.0003,       # 显著趋势改善
             noise_level=0.15,          # 中等噪声
             seasonality=0.07,          # 轻微季节性（日内波动）
-            autocorr=0.25,             # 中等自相关
+            autocorr=0.,             # 中等自相关
             signal_to_noise=0.45       # 降低信噪比，产生更低的R^2
         )
     
