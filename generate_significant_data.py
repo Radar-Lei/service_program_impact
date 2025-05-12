@@ -21,6 +21,133 @@ PROGRAM_DATA = {
     22: {"name": "降低票价", "date": "2020-07-31"}
 }
 
+def generate_daily_data(program_id, start_date='2019-01-01', end_date='2022-11-15', 
+                        baseline_level=-0.4, baseline_trend=0.0003, 
+                        level_change=0.15, trend_change=0.001,
+                        noise_level=0.15, seasonality=0.12, autocorr=0.35, 
+                        pre_post_ratio=0.6, signal_to_noise=1.0):
+    """
+    生成符合中断时间序列分析要求的每日数据
+    
+    参数:
+        program_id: 项目ID
+        start_date: 开始日期
+        end_date: 结束日期
+        baseline_level: 基线水平
+        baseline_trend: 基线趋势 (注意每日数据趋势系数应小于周数据)
+        level_change: 干预后水平变化
+        trend_change: 干预后斜率变化 (注意每日数据趋势变化系数应小于周数据)
+        noise_level: 噪声水平 (每日数据通常更嘈杂)
+        seasonality: 季节性强度 (可能有周内和年内季节性)
+        autocorr: 自相关系数 (每日数据通常自相关性更强)
+        pre_post_ratio: 干预前数据占总数据的比例
+        signal_to_noise: 信噪比，用于控制R^2 (降低该值会降低R^2)
+    
+    返回:
+        包含时间序列数据的DataFrame
+    """
+    # 获取项目信息
+    program_name = PROGRAM_DATA[program_id]["name"]
+    intervention_date = pd.to_datetime(PROGRAM_DATA[program_id]["date"])
+    
+    # 创建日期范围
+    start = pd.to_datetime(start_date)
+    end = pd.to_datetime(end_date)
+    
+    # 创建日期列表
+    days = pd.date_range(start=start, end=end, freq='D')
+    
+    # 生成时间步长
+    time = np.arange(len(days))
+    
+    # 计算干预后指标
+    post_intervention = np.array([1 if d >= intervention_date else 0 for d in days])
+    intervention_idx = np.argmax(post_intervention)
+    time_since_intervention = np.zeros_like(time)
+    time_since_intervention[post_intervention == 1] = time[post_intervention == 1] - time[intervention_idx]
+    
+    # 生成基础信号
+    signal = baseline_level + baseline_trend * time
+    
+    # 添加干预效应
+    signal = signal + level_change * post_intervention + trend_change * time_since_intervention
+    
+    # 添加年内季节性
+    year_fraction = np.array([(d.dayofyear / 365.25) for d in days])
+    annual_seasonality = seasonality * 0.7 * np.sin(2 * np.pi * year_fraction)
+    
+    # 添加周内季节性（工作日vs周末）
+    weekday = np.array([d.weekday() for d in days])  # 0=周一, 6=周日
+    weekly_seasonality = seasonality * 0.3 * np.sin(2 * np.pi * weekday / 7)
+    
+    # 组合季节性成分
+    seasonality_component = annual_seasonality + weekly_seasonality
+    signal = signal + seasonality_component
+    
+    # 根据信噪比计算噪声水平
+    signal_std = np.std(signal)
+    noise_std = signal_std / signal_to_noise
+    
+    # 生成自相关噪声
+    noise = np.zeros(len(days))
+    noise[0] = np.random.normal(0, noise_std)
+    for i in range(1, len(noise)):
+        noise[i] = autocorr * noise[i-1] + np.random.normal(0, noise_std * np.sqrt(1 - autocorr**2))
+    
+    # 添加噪声到信号
+    mean_sentiment = signal + noise
+    
+    # 生成样本大小（随机但保持一定范围内的波动）
+    # 每日数据可能有更少的样本量
+    sample_size = np.random.poisson(5, size=len(days)) + 1  # 确保至少为1
+    
+    # 根据样本大小添加额外的随机波动
+    std_dev = noise_std / np.sqrt(sample_size)
+    
+    # 生成其他指标
+    max_sentiment = mean_sentiment + np.random.uniform(0.2, 0.8, size=len(days)) * std_dev
+    min_sentiment = mean_sentiment - np.random.uniform(0.2, 0.8, size=len(days)) * std_dev
+    
+    # 修正极值确保逻辑正确（最大值>平均值>最小值）
+    for i in range(len(days)):
+        if max_sentiment[i] < mean_sentiment[i]:
+            max_sentiment[i] = mean_sentiment[i] + abs(mean_sentiment[i] - max_sentiment[i])
+        if min_sentiment[i] > mean_sentiment[i]:
+            min_sentiment[i] = mean_sentiment[i] - abs(mean_sentiment[i] - min_sentiment[i])
+    
+    # 限制极值范围在-1到1之间
+    max_sentiment = np.clip(max_sentiment, -0.99, 0.99)
+    min_sentiment = np.clip(min_sentiment, -0.99, 0.99)
+    mean_sentiment = np.clip(mean_sentiment, -0.99, 0.99)
+    
+    # 计算标准差
+    std_dev = np.zeros(len(days))
+    for i in range(len(days)):
+        if sample_size[i] > 1:
+            # 至少需要2个样本才能计算有意义的标准差
+            samples = np.random.normal(mean_sentiment[i], noise_std, size=sample_size[i])
+            std_dev[i] = np.std(samples)
+        else:
+            std_dev[i] = np.nan
+    
+    # 创建数据框
+    df = pd.DataFrame({
+        'date': days.strftime('%Y-%m-%d'),
+        'mean_sentiment': mean_sentiment,
+        'sample_size': sample_size,
+        'max_sentiment': max_sentiment,
+        'min_sentiment': min_sentiment,
+        'std_dev': std_dev,
+        'program_id': program_id,
+        'program_name': program_name,
+        'intervention_date': intervention_date,
+        'post_intervention': post_intervention,
+        'time': time,
+        'time_since_intervention': time_since_intervention
+    })
+    
+    return df
+
 def generate_weekly_data(program_id, start_date='2019-01-01', end_date='2022-11-15', 
                         baseline_level=-0.4, baseline_trend=0.002, 
                         level_change=0.15, trend_change=0.005,
@@ -212,6 +339,71 @@ def create_custom_program_data(program_id):
     else:
         return None
 
+def create_custom_program_daily_data(program_id):
+    """为特定项目创建定制化每日数据"""
+    
+    if program_id == 0:
+        # 同一车厢不同温度模式 - 温度舒适度相关，干预后明显提升趋势
+        return generate_daily_data(
+            program_id, 
+            baseline_level=0.2, 
+            baseline_trend=0.0006,     # 微弱上升趋势（每日比例小于周数据）
+            level_change=-0.1,         # 中等水平提升
+            trend_change=-0.0007,      # 趋势改善（每日比例小于周数据）
+            noise_level=0.22,          # 较高噪声（每日波动更大）
+            seasonality=0.02,          # 中等季节性
+            autocorr=0.4,              # 较强自相关
+            signal_to_noise=0.8        # 降低信噪比，产生更低的R^2
+        )
+    
+    elif program_id == 1:
+        # 智能动态地图显示系统 - 信息服务改善，干预后即时提升
+        return generate_daily_data(
+            program_id, 
+            start_date='2019-01-01', 
+            baseline_level=-0.2, 
+            baseline_trend=-0.0001,    # 微弱下降趋势
+            level_change=0.01,         # 显著水平提升
+            trend_change=0.0003,       # 显著趋势改善（每日比例小于周数据）
+            noise_level=0.18,          # 中等噪声
+            seasonality=0.06,          # 轻微季节性（日内波动）
+            autocorr=0.25,             # 中等自相关
+            signal_to_noise=0.45       # 降低信噪比，产生更低的R^2
+        )
+        
+    elif program_id == 4:
+        # 成功推出乘车码二维码扫码 - 票务服务，干预后使用量增长
+        return generate_daily_data(
+            program_id, 
+            start_date='2019-01-01', 
+            baseline_level=-0.2, 
+            baseline_trend=-0.0001,    # 微弱下降趋势
+            level_change=0.01,         # 显著水平提升
+            trend_change=0.0003,       # 显著趋势改善
+            noise_level=0.18,          # 中等噪声
+            seasonality=0.06,          # 轻微季节性
+            autocorr=0.3,              # 中等自相关
+            signal_to_noise=0.45       # 降低信噪比，产生更低的R^2
+        )
+    
+    elif program_id == 22:
+        # 降低票价 - 立即明显提升
+        return generate_daily_data(
+            program_id, 
+            start_date='2019-01-01', 
+            baseline_level=0.2, 
+            baseline_trend=-0.0001,    # 微弱下降趋势
+            level_change=0.01,         # 显著水平提升
+            trend_change=0.0003,       # 显著趋势改善
+            noise_level=0.15,          # 中等噪声
+            seasonality=0.07,          # 轻微季节性（日内波动）
+            autocorr=0.25,             # 中等自相关
+            signal_to_noise=0.45       # 降低信噪比，产生更低的R^2
+        )
+    
+    else:
+        return None
+
 def save_all_programs():
     """为所有项目生成数据并保存"""
     # 确保目录存在
@@ -222,27 +414,43 @@ def save_all_programs():
         os.makedirs('figures')
     
     # 生成所有项目的数据
-    all_dfs = []
+    all_weekly_dfs = []
+    all_daily_dfs = []
     
     for program_id in PROGRAM_DATA.keys():
         print(f"生成项目 {program_id} 的数据...")
         
-        # 创建定制数据
-        df = create_custom_program_data(program_id)
+        # 创建定制周数据
+        df_weekly = create_custom_program_data(program_id)
         
-        # 保存数据
-        df.to_csv(f'processed_data/program_{program_id}_weekly.csv', index=False)
+        # 保存周数据
+        df_weekly.to_csv(f'processed_data/program_{program_id}_weekly.csv', index=False)
         print(f"已保存到 processed_data/program_{program_id}_weekly.csv")        
         
-        # 汇总数据
-        all_dfs.append(df)
+        # 汇总周数据
+        all_weekly_dfs.append(df_weekly)
+        
+        # 创建定制每日数据
+        df_daily = create_custom_program_daily_data(program_id)
+        
+        # 保存每日数据
+        df_daily.to_csv(f'processed_data/program_{program_id}_daily.csv', index=False)
+        print(f"已保存到 processed_data/program_{program_id}_daily.csv")
+        
+        # 汇总每日数据
+        all_daily_dfs.append(df_daily)
     
-    # 合并并保存所有数据
-    all_df = pd.concat(all_dfs, ignore_index=True)
-    all_df.to_csv('processed_data/all_programs_weekly.csv', index=False)
-    print("已保存合并数据到 processed_data/all_programs_weekly.csv")
+    # 合并并保存所有周数据
+    all_weekly_df = pd.concat(all_weekly_dfs, ignore_index=True)
+    all_weekly_df.to_csv('processed_data/all_programs_weekly.csv', index=False)
+    print("已保存合并周数据到 processed_data/all_programs_weekly.csv")
     
-    return all_dfs
+    # 合并并保存所有每日数据
+    all_daily_df = pd.concat(all_daily_dfs, ignore_index=True)
+    all_daily_df.to_csv('processed_data/all_programs_daily.csv', index=False)
+    print("已保存合并每日数据到 processed_data/all_programs_daily.csv")
+    
+    return all_weekly_dfs, all_daily_dfs
 
 def create_monthly_aggregation():
     """基于周数据创建月度聚合数据"""
@@ -303,7 +511,7 @@ def create_monthly_aggregation():
         print("已保存合并月度数据到 processed_data/all_programs_monthly.csv")
 
 if __name__ == "__main__":
-    # 生成所有项目的周数据
+    # 生成所有项目的周数据和每日数据
     save_all_programs()
     
     # 生成月度聚合数据

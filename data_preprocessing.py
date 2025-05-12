@@ -77,6 +77,7 @@ def preprocess_data(feedback_dir, program_ids=None):
     # 2. Process feedback data for each valid service program
     all_weekly_data = []
     all_monthly_data = []
+    all_daily_data = []
     
     for i, program in valid_programs.iterrows():
         program_id = i
@@ -113,6 +114,27 @@ def preprocess_data(feedback_dir, program_ids=None):
         feedback_df['intervention_date'] = intervention_date
         feedback_df['post_intervention'] = (feedback_df['post_time'] >= intervention_date).astype(int)
         
+        # Aggregate by day
+        feedback_df['date'] = feedback_df['post_time'].dt.date
+        daily_agg = feedback_df.groupby('date').agg(
+            mean_sentiment=('sentiment_score', 'mean'),
+            sample_size=('sentiment_score', 'count'),
+            max_sentiment=('sentiment_score', 'max'),
+            min_sentiment=('sentiment_score', 'min'),
+            std_dev=('sentiment_score', 'std')
+        ).reset_index()
+        daily_agg['program_id'] = program_id
+        daily_agg['program_name'] = program_name
+        daily_agg['intervention_date'] = intervention_date
+        daily_agg['post_intervention'] = (pd.to_datetime(daily_agg['date']) >= intervention_date).astype(int)
+        daily_agg['time'] = range(len(daily_agg))
+        intervention_idx = daily_agg['post_intervention'].argmax() if 1 in daily_agg['post_intervention'].values else None
+        if intervention_idx is not None:
+            daily_agg['time_since_intervention'] = daily_agg['post_intervention'] * (daily_agg['time'] - intervention_idx)
+            daily_agg['time_since_intervention'] = daily_agg['time_since_intervention'].apply(lambda x: max(0, x))
+        else:
+            daily_agg['time_since_intervention'] = 0
+        
         # Aggregate by week
         feedback_df['week'] = feedback_df['post_time'].dt.to_period('W')
         weekly_agg = feedback_df.groupby('week').agg(
@@ -148,10 +170,12 @@ def preprocess_data(feedback_dir, program_ids=None):
         monthly_agg['time_since_intervention'] = monthly_agg['time_since_intervention'].apply(lambda x: max(0, x))
         
         # Save processed data
+        daily_agg.to_csv(f'processed_data/program_{program_id}_daily.csv', index=False)
         weekly_agg.to_csv(f'processed_data/program_{program_id}_weekly.csv', index=False)
         monthly_agg.to_csv(f'processed_data/program_{program_id}_monthly.csv', index=False)
         
         # Add each program's data to the combined datasets
+        all_daily_data.append(daily_agg)
         all_weekly_data.append(weekly_agg)
         all_monthly_data.append(monthly_agg)
         
@@ -170,6 +194,10 @@ def preprocess_data(feedback_dir, program_ids=None):
         plt.close()
     
     # Combine all program data
+    if all_daily_data:
+        all_daily_df = pd.concat(all_daily_data, ignore_index=True)
+        all_daily_df.to_csv('processed_data/all_programs_daily.csv', index=False)
+        
     if all_weekly_data:
         all_weekly_df = pd.concat(all_weekly_data, ignore_index=True)
         all_weekly_df.to_csv('processed_data/all_programs_weekly.csv', index=False)
