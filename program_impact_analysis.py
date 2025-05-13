@@ -29,6 +29,22 @@ output_dir = "analysis_output"
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
+# 新增：定义统计数据汇总文件名
+summary_file_path = os.path.join(output_dir, "analysis_data_summary.txt")
+
+def append_to_summary_file(filepath, title, content_df=None, content_text=None):
+    """向汇总文件追加内容"""
+    with open(filepath, 'a', encoding='utf-8') as f:
+        f.write(f"\n\n******************************************\n")
+        f.write(f"{title}\n")
+        f.write(f"******************************************\n")
+        if content_df is not None:
+            f.write(content_df.to_string(index=True))
+            f.write("\n")
+        if content_text is not None:
+            f.write(content_text)
+            f.write("\n")
+
 def load_data():
     """加载所有数据文件"""
     data_dir = "processed_data"
@@ -78,32 +94,26 @@ def plot_sentiment_before_after(monthly_all, program_files):
         15: "移动母婴室",
     }
     
-    # 修改这里: 直接遍历 program_files 字典的 items()
     for i, (program_id, df) in enumerate(program_files.items()):
-        if i >= len(axes):  # 安全检查，确保不会超出子图数量
+        if i >= len(axes):
             break
             
-        # 分离实施前后的数据
         before = df[df['post_intervention'] == 0]
         after = df[df['post_intervention'] == 1]
         
-        # 绘制时间序列
         ax = axes[i]
         ax.plot(before['month'], before['mean_sentiment'], 'o-', color='blue', label='实施前')
         ax.plot(after['month'], after['mean_sentiment'], 'o-', color='red', label='实施后')
         
-        # 添加干预日期的垂直线
         intervention_date = df['intervention_date'].iloc[0]
         ax.axvline(x=intervention_date, color='green', linestyle='--', label='干预日期')
         
-        # 设置标题和标签
-        ax.set_title(f'项目 {program_id}: {program_names[program_id]}')
+        ax.set_title(f'项目 {program_id}: {program_names.get(program_id, f"未知项目 {program_id}")}')
         ax.set_xlabel('日期')
         ax.set_ylabel('平均情感得分')
         ax.legend()
         ax.grid(True, alpha=0.3)
         
-        # 设置x轴日期格式
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
         ax.xaxis.set_major_locator(mdates.MonthLocator(interval=6))
         plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
@@ -116,33 +126,49 @@ def plot_sentiment_distribution(monthly_all):
     """绘制不同项目情感得分分布对比图"""
     plt.figure(figsize=(14, 8))
     
-    # 为每个项目创建实施前后的分组
     programs = monthly_all['program_id'].unique()
     data_to_plot = []
     labels = []
     
+    program_names_map = {
+        0: "同车不同温", 1: "智能动态地图显示系统", 4: "成功推出乘车码二维码扫码",
+        22: "降低票价", 5: "完成82个站点卫生间改造", 15: "移动母婴室"
+    }
+
     for program_id in programs:
         program_data = monthly_all[monthly_all['program_id'] == program_id]
-        program_name = program_data['program_name'].iloc[0]
-        
-        # 实施前
+        # Use the map, fall back to a default if program_id not found or name is missing
+        program_name = program_names_map.get(program_id, f"项目 {program_id}")
+        if not program_data.empty and 'program_name' in program_data.columns:
+             # Prefer actual name from data if available and consistent
+            actual_name = program_data['program_name'].iloc[0]
+            if pd.notna(actual_name) : program_name = actual_name
+
         before_data = program_data[program_data['post_intervention'] == 0]['mean_sentiment']
-        data_to_plot.append(before_data)
-        labels.append(f"{program_name}\n(实施前)")
+        if not before_data.empty:
+            data_to_plot.append(before_data)
+            labels.append(f"{program_name}\n(实施前)")
         
-        # 实施后
         after_data = program_data[program_data['post_intervention'] == 1]['mean_sentiment']
-        data_to_plot.append(after_data)
-        labels.append(f"{program_name}\n(实施后)")
+        if not after_data.empty:
+            data_to_plot.append(after_data)
+            labels.append(f"{program_name}\n(实施后)")
     
-    # 绘制箱线图
+    if not data_to_plot:
+        plt.text(0.5, 0.5, "无可用数据绘制箱线图", ha='center', va='center')
+        plt.title('各项目实施前后情感得分分布')
+        plt.savefig(os.path.join(output_dir, "sentiment_distribution.png"), dpi=300, bbox_inches='tight')
+        plt.close()
+        return
+
     box = plt.boxplot(data_to_plot, patch_artist=True, labels=labels)
     
-    # 设置颜色
     colors = []
-    for i in range(len(programs)):
-        colors.extend(['lightblue', 'lightcoral'])
-    
+    # Adjust color generation based on actual data plotted
+    for i in range(len(data_to_plot)):
+        # Assuming paired before/after, alternate colors
+        colors.append('lightblue' if i % 2 == 0 else 'lightcoral') 
+
     for patch, color in zip(box['boxes'], colors):
         patch.set_facecolor(color)
     
@@ -158,23 +184,31 @@ def calculate_impact_statistics(program_files):
     """计算项目实施前后的统计差异"""
     impact_stats = []
     
+    program_names_map = {
+        0: "同车不同温", 1: "智能动态地图显示系统", 4: "成功推出乘车码二维码扫码",
+        22: "降低票价", 5: "完成82个站点卫生间改造", 15: "移动母婴室"
+    }
+
     for program_id, df in program_files.items():
         before = df[df['post_intervention'] == 0]['mean_sentiment']
         after = df[df['post_intervention'] == 1]['mean_sentiment']
         
-        # 计算基本统计量
+        program_name = program_names_map.get(program_id, f"未知项目 {program_id}")
+        if not df.empty and 'program_name' in df.columns and pd.notna(df['program_name'].iloc[0]):
+            program_name = df['program_name'].iloc[0]
+
         stats = {
             'program_id': program_id,
-            'program_name': df['program_name'].iloc[0],
-            'before_mean': before.mean(),
-            'after_mean': after.mean(),
-            'mean_diff': after.mean() - before.mean(),
-            'before_std': before.std(),
-            'after_std': after.std(),
-            'before_min': before.min(),
-            'after_min': after.min(),
-            'before_max': before.max(),
-            'after_max': after.max(),
+            'program_name': program_name,
+            'before_mean': before.mean() if not before.empty else np.nan,
+            'after_mean': after.mean() if not after.empty else np.nan,
+            'mean_diff': (after.mean() - before.mean()) if not after.empty and not before.empty else np.nan,
+            'before_std': before.std() if not before.empty else np.nan,
+            'after_std': after.std() if not after.empty else np.nan,
+            'before_min': before.min() if not before.empty else np.nan,
+            'after_min': after.min() if not after.empty else np.nan,
+            'before_max': before.max() if not before.empty else np.nan,
+            'after_max': after.max() if not after.empty else np.nan,
             'sample_size_before': len(before),
             'sample_size_after': len(after)
         }
@@ -186,24 +220,27 @@ def calculate_impact_statistics(program_files):
 
 def plot_impact_comparison(impact_stats):
     """绘制项目影响对比图"""
+    if impact_stats.empty:
+        print("Impact_stats 为空，无法绘制项目影响对比图。")
+        return
+
     plt.figure(figsize=(12, 6))
     
-    # 准备数据
     programs = impact_stats['program_name']
     mean_diff = impact_stats['mean_diff']
     
-    # 创建颜色映射
-    colors = ['red' if x < 0 else 'green' for x in mean_diff]
+    colors = ['red' if x < 0 else ('grey' if pd.isna(x) else 'green') for x in mean_diff]
     
-    # 绘制条形图
-    bars = plt.bar(programs, mean_diff, color=colors)
+    bars = plt.bar(programs, mean_diff.fillna(0), color=colors) # Fill NaN for plotting, color indicates NaN
     
-    # 添加数值标签
     for bar in bars:
         height = bar.get_height()
+        original_value = mean_diff.iloc[bars.patches.index(bar)] # Get original value for text
+        text_label = f'{original_value:.3f}' if pd.notna(original_value) else 'N/A'
+        
         plt.text(bar.get_x() + bar.get_width()/2.,
-                 height + 0.01 if height >= 0 else height - 0.03,
-                 f'{height:.3f}',
+                 height + (0.01 if height >= 0 else -0.03), # Adjust text position based on height
+                 text_label,
                  ha='center', va='bottom' if height >= 0 else 'top')
     
     plt.axhline(y=0, color='black', linestyle='-', alpha=0.3)
@@ -219,43 +256,51 @@ def plot_time_series_decomposition(program_files):
     """绘制时间序列分解图，分析趋势、季节性和残差"""
     from statsmodels.tsa.seasonal import seasonal_decompose
     
+    program_names_map = {
+        0: "同车不同温", 1: "智能动态地图显示系统", 4: "成功推出乘车码二维码扫码",
+        22: "降低票价", 5: "完成82个站点卫生间改造", 15: "移动母婴室"
+    }
+
     for program_id, df in program_files.items():
-        # 确保数据按时间排序
+        program_name = program_names_map.get(program_id, f"未知项目 {program_id}")
+        if not df.empty and 'program_name' in df.columns and pd.notna(df['program_name'].iloc[0]):
+            program_name = df['program_name'].iloc[0]
+
         df = df.sort_values('month')
-        
-        # 设置时间索引
         ts_data = df.set_index('month')['mean_sentiment']
         
-        # 进行时间序列分解
+        if len(ts_data) < 24: # 要求至少两个周期的数据进行分解 (period=12)
+            message = f"项目 {program_id} ({program_name}) 数据点不足 ({len(ts_data)})，无法进行周期为12的时间序列分解。"
+            print(message)
+            append_to_summary_file(
+                summary_file_path,
+                f"时间序列分解 - 项目 {program_id}: {program_name}",
+                content_text=f"错误: {message}"
+            )
+            continue
+
         try:
-            # 假设数据是月度数据，周期为12
             decomposition = seasonal_decompose(ts_data, model='additive', period=12)
             
-            # 创建图形
             fig = plt.figure(figsize=(14, 10))
             
-            # 原始数据
             ax1 = plt.subplot(411)
             ax1.plot(ts_data.index, ts_data.values)
             ax1.set_ylabel('原始数据')
-            ax1.set_title(f'项目 {program_id}: {df["program_name"].iloc[0]} - 时间序列分解')
+            ax1.set_title(f'项目 {program_id}: {program_name} - 时间序列分解')
             
-            # 趋势
             ax2 = plt.subplot(412)
             ax2.plot(decomposition.trend.index, decomposition.trend.values)
             ax2.set_ylabel('趋势')
             
-            # 季节性
             ax3 = plt.subplot(413)
             ax3.plot(decomposition.seasonal.index, decomposition.seasonal.values)
             ax3.set_ylabel('季节性')
             
-            # 残差
             ax4 = plt.subplot(414)
             ax4.scatter(decomposition.resid.index, decomposition.resid.values)
             ax4.set_ylabel('残差')
             
-            # 添加干预日期的垂直线
             intervention_date = df['intervention_date'].iloc[0]
             for ax in [ax1, ax2, ax3, ax4]:
                 ax.axvline(x=intervention_date, color='red', linestyle='--', label='干预日期')
@@ -266,86 +311,179 @@ def plot_time_series_decomposition(program_files):
             plt.tight_layout()
             plt.savefig(os.path.join(output_dir, f"time_series_decomposition_program_{program_id}.png"), dpi=300, bbox_inches='tight')
             plt.close()
+
+            # 保存分解统计信息
+            decomposition_summary = (
+                f"趋势 (Trend) 描述:\n{decomposition.trend.describe().to_string()}\n\n"
+                f"季节性 (Seasonal) 描述:\n{decomposition.seasonal.describe().to_string()}\n\n"
+                f"残差 (Residual) 描述:\n{decomposition.resid.describe().to_string()}"
+            )
+            append_to_summary_file(
+                summary_file_path,
+                f"时间序列分解 - 项目 {program_id}: {program_name}",
+                content_text=decomposition_summary
+            )
+
         except Exception as e:
-            print(f"无法为项目 {program_id} 进行时间序列分解: {e}")
+            message = f"无法为项目 {program_id} ({program_name}) 进行时间序列分解: {e}"
+            print(message)
+            append_to_summary_file(
+                summary_file_path,
+                f"时间序列分解 - 项目 {program_id}: {program_name}",
+                content_text=f"错误: {message}"
+            )
 
 def plot_sample_size_analysis(program_files):
     """分析样本量与情感得分的关系"""
     plt.figure(figsize=(14, 8))
     
+    program_names_map = {
+        0: "同车不同温", 1: "智能动态地图显示系统", 4: "成功推出乘车码二维码扫码",
+        22: "降低票价", 5: "完成82个站点卫生间改造", 15: "移动母婴室"
+    }
+    
+    # 确保子图数量不超过实际项目数或预设上限 (例如2x2=4)
+    num_programs = len(program_files)
+    cols = 2
+    rows = (num_programs + cols - 1) // cols 
+    if rows * cols > 4 : # Cap at 2x2 grid for this example
+        rows = 2
+        cols = 2
+
+    fig, axes = plt.subplots(rows, cols, figsize=(14, 4 * rows if rows > 0 else 8))
+    axes = np.array(axes).flatten() # Ensure axes is always an array
+
+    plot_count = 0
     for i, (program_id, df) in enumerate(program_files.items()):
-        if i >= 4:  # 限制子图数量，以确保不超出
+        if plot_count >= len(axes): 
             break
-            
-        plt.subplot(2, 2, i+1)
         
-        # 分离实施前后的数据
+        ax = axes[plot_count]
+        
+        program_name = program_names_map.get(program_id, f"未知项目 {program_id}")
+        if not df.empty and 'program_name' in df.columns and pd.notna(df['program_name'].iloc[0]):
+            program_name = df['program_name'].iloc[0]
+
         before = df[df['post_intervention'] == 0]
         after = df[df['post_intervention'] == 1]
         
-        # 绘制散点图
-        plt.scatter(before['sample_size'], before['mean_sentiment'],
-                    label='实施前', alpha=0.7, color='blue')
-        plt.scatter(after['sample_size'], after['mean_sentiment'],
-                    label='实施后', alpha=0.7, color='red')
+        analysis_summary_text = ""
+
+        if not before.empty and not before['sample_size'].isnull().all() and not before['mean_sentiment'].isnull().all():
+            ax.scatter(before['sample_size'], before['mean_sentiment'],
+                        label='实施前', alpha=0.7, color='blue')
+            if len(before.dropna(subset=['sample_size', 'mean_sentiment'])) > 1:
+                z1 = np.polyfit(before['sample_size'].dropna(), before['mean_sentiment'].dropna(), 1)
+                p1 = np.poly1d(z1)
+                # Plot trend line only over the range of actual data points
+                x_before = np.linspace(before['sample_size'].min(), before['sample_size'].max(), 100)
+                ax.plot(x_before, p1(x_before), linestyle='--', color='blue')
+                analysis_summary_text += f"实施前趋势线系数 (y = {z1[0]:.4f}x + {z1[1]:.4f})\n"
         
-        # 添加趋势线
-        if len(before) > 1:
-            z1 = np.polyfit(before['sample_size'], before['mean_sentiment'], 1)
-            p1 = np.poly1d(z1)
-            plt.plot(before['sample_size'], p1(before['sample_size']),
-                     linestyle='--', color='blue')
+        if not after.empty and not after['sample_size'].isnull().all() and not after['mean_sentiment'].isnull().all():
+            ax.scatter(after['sample_size'], after['mean_sentiment'],
+                        label='实施后', alpha=0.7, color='red')
+            if len(after.dropna(subset=['sample_size', 'mean_sentiment'])) > 1:
+                z2 = np.polyfit(after['sample_size'].dropna(), after['mean_sentiment'].dropna(), 1)
+                p2 = np.poly1d(z2)
+                x_after = np.linspace(after['sample_size'].min(), after['sample_size'].max(), 100)
+                ax.plot(x_after, p2(x_after), linestyle='--', color='red')
+                analysis_summary_text += f"实施后趋势线系数 (y = {z2[0]:.4f}x + {z2[1]:.4f})\n"
             
-        if len(after) > 1:
-            z2 = np.polyfit(after['sample_size'], after['mean_sentiment'], 1)
-            p2 = np.poly1d(z2)
-            plt.plot(after['sample_size'], p2(after['sample_size']),
-                     linestyle='--', color='red')
-            
-        plt.title(f'项目 {program_id}: {df["program_name"].iloc[0]}')
-        plt.xlabel('样本量')
-        plt.ylabel('平均情感得分')
-        plt.legend()
-        plt.grid(True, alpha=0.3)
+        ax.set_title(f'项目 {program_id}: {program_name}')
+        ax.set_xlabel('样本量')
+        ax.set_ylabel('平均情感得分')
+        ax.legend()
+        ax.grid(True, alpha=0.3)
+        
+        append_to_summary_file(
+            summary_file_path,
+            f"样本量与情感得分分析 - 项目 {program_id}: {program_name}",
+            content_text=analysis_summary_text if analysis_summary_text else "数据不足或样本量/情感得分数据缺失，无法拟合趋势线。"
+        )
+        plot_count += 1
     
+    # Hide any unused subplots
+    for j in range(plot_count, len(axes)):
+        fig.delaxes(axes[j])
+
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, "sample_size_analysis.png"), dpi=300, bbox_inches='tight')
     plt.close()
 
 def plot_heatmap_monthly_patterns(program_files):
     """绘制月度模式热图，分析不同月份的情感得分模式"""
+    program_names_map = {
+        0: "同车不同温", 1: "智能动态地图显示系统", 4: "成功推出乘车码二维码扫码",
+        22: "降低票价", 5: "完成82个站点卫生间改造", 15: "移动母婴室"
+    }
+
     for program_id, df in program_files.items():
-        # 提取年份和月份
-        df['year'] = df['month'].dt.year
-        df['month_num'] = df['month'].dt.month
+        program_name = program_names_map.get(program_id, f"未知项目 {program_id}")
+        if not df.empty and 'program_name' in df.columns and pd.notna(df['program_name'].iloc[0]):
+            program_name = df['program_name'].iloc[0]
+
+        if df.empty or 'mean_sentiment' not in df.columns or df['mean_sentiment'].isnull().all():
+            message = f"项目 {program_id} ({program_name}) 数据为空或情感得分数据缺失，无法生成热图。"
+            print(message)
+            append_to_summary_file(
+                summary_file_path,
+                f"月度情感得分模式 - 项目 {program_id}: {program_name}",
+                content_text=f"错误: {message}"
+            )
+            continue
         
-        # 创建数据透视表
-        pivot_data = df.pivot_table(index='year', columns='month_num',
-                                    values='mean_sentiment', aggfunc='mean')
+        df_copy = df.copy() # Work on a copy to avoid SettingWithCopyWarning
+        df_copy['year'] = df_copy['month'].dt.year
+        df_copy['month_num'] = df_copy['month'].dt.month
         
-        # 绘制热图
+        try:
+            pivot_data = df_copy.pivot_table(index='year', columns='month_num',
+                                        values='mean_sentiment', aggfunc='mean')
+        except Exception as e:
+            message = f"项目 {program_id} ({program_name}) 创建透视表失败: {e}"
+            print(message)
+            append_to_summary_file(
+                summary_file_path,
+                f"月度情感得分模式 - 项目 {program_id}: {program_name}",
+                content_text=f"错误: {message}"
+            )
+            continue
+
+        if pivot_data.empty:
+            message = f"项目 {program_id} ({program_name}) 的透视表为空，无法生成热图。"
+            print(message)
+            append_to_summary_file(
+                summary_file_path,
+                f"月度情感得分模式 - 项目 {program_id}: {program_name}",
+                content_text=f"错误: {message}"
+            )
+            continue
+
         plt.figure(figsize=(14, 8))
         sns.heatmap(pivot_data, cmap='RdBu_r', center=0, annot=True, fmt='.2f',
                     cbar_kws={'label': '平均情感得分'})
         
-        # 设置标题和标签
-        plt.title(f'项目 {program_id}: {df["program_name"].iloc[0]} - 月度情感得分模式')
+        plt.title(f'项目 {program_id}: {program_name} - 月度情感得分模式')
         plt.xlabel('月份')
         plt.ylabel('年份')
         
-        # 设置月份标签
         month_labels = ['一月', '二月', '三月', '四月', '五月', '六月',
                         '七月', '八月', '九月', '十月', '十一月', '十二月']
-        plt.xticks(np.arange(12) + 0.5, month_labels, rotation=45)
-        
-        # 添加干预时间标记
-        intervention_date = df['intervention_date'].iloc[0]
+        # Adjust xticks to match available columns in pivot_data
+        available_months = sorted(pivot_data.columns.unique())
+        plt.xticks(ticks=[available_months.index(m) + 0.5 for m in available_months], 
+                   labels=[month_labels[m-1] for m in available_months], rotation=45)
+
+        intervention_date = df_copy['intervention_date'].iloc[0]
         intervention_year = intervention_date.year
         intervention_month = intervention_date.month
         
-        # 在热图上标记干预时间点
         if intervention_year in pivot_data.index and intervention_month in pivot_data.columns:
-            plt.plot(intervention_month - 0.5, pivot_data.index.get_loc(intervention_year) + 0.5,
+            # Get numerical index for year and find position of month in sorted columns
+            year_idx = pivot_data.index.get_loc(intervention_year)
+            month_idx_in_cols = available_months.index(intervention_month)
+            plt.plot(month_idx_in_cols + 0.5, year_idx + 0.5,
                      'o', markersize=12, color='green', mfc='none', mew=2, label='干预时间点')
             plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
             
@@ -353,125 +491,239 @@ def plot_heatmap_monthly_patterns(program_files):
         plt.savefig(os.path.join(output_dir, f"heatmap_monthly_pattern_program_{program_id}.png"), dpi=300, bbox_inches='tight')
         plt.close()
 
+        append_to_summary_file(
+            summary_file_path,
+            f"月度情感得分模式 - 项目 {program_id}: {program_name}",
+            content_df=pivot_data
+        )
+
 def plot_intervention_effect_over_time(program_files):
     """分析干预效果随时间的变化"""
-    plt.figure(figsize=(14, 8))
+    program_names_map = {
+        0: "同车不同温", 1: "智能动态地图显示系统", 4: "成功推出乘车码二维码扫码",
+        22: "降低票价", 5: "完成82个站点卫生间改造", 15: "移动母婴室"
+    }
     
+    num_programs = len(program_files)
+    cols = 2
+    rows = (num_programs + cols - 1) // cols
+    if rows * cols > 4: # Cap at 2x2 grid
+        rows = 2
+        cols = 2
+
+    fig, axes = plt.subplots(rows, cols, figsize=(14, 5 * rows if rows > 0 else 8), squeeze=False)
+    axes = axes.flatten()
+
+    plot_count = 0
     for i, (program_id, df) in enumerate(program_files.items()):
-        if i >= 4:  # 限制子图数量，以确保不超出
+        if plot_count >= len(axes):
             break
-            
-        # 只使用干预后的数据
+        
+        ax = axes[plot_count]
+        program_name = program_names_map.get(program_id, f"未知项目 {program_id}")
+        if not df.empty and 'program_name' in df.columns and pd.notna(df['program_name'].iloc[0]):
+            program_name = df['program_name'].iloc[0]
+
         after_data = df[df['post_intervention'] == 1].copy()
+        before_sentiment = df[df['post_intervention'] == 0]['mean_sentiment']
         
-        # 计算干预前的平均情感得分作为基准
-        before_mean = df[df['post_intervention'] == 0]['mean_sentiment'].mean()
+        if before_sentiment.empty:
+            message = f"项目 {program_id} ({program_name}) 无干预前数据，无法计算基准。"
+            print(message)
+            ax.text(0.5, 0.5, "无干预前数据", ha='center', va='center')
+            ax.set_title(f'项目 {program_id}: {program_name}')
+            append_to_summary_file(
+                summary_file_path,
+                f"干预效果随时间变化 - 项目 {program_id}: {program_name}",
+                content_text=f"错误: {message}"
+            )
+            plot_count += 1
+            continue
+
+        before_mean = before_sentiment.mean()
         
-        # 计算与基准的差异
+        if after_data.empty or 'time_since_intervention' not in after_data.columns or 'mean_sentiment' not in after_data.columns:
+            message = f"项目 {program_id} ({program_name}) 无干预后数据或必要列缺失。"
+            print(message)
+            ax.text(0.5, 0.5, "无干预后数据", ha='center', va='center')
+            ax.set_title(f'项目 {program_id}: {program_name}')
+            append_to_summary_file(
+                summary_file_path,
+                f"干预效果随时间变化 - 项目 {program_id}: {program_name}",
+                content_text=f"错误: {message}"
+            )
+            plot_count += 1
+            continue
+
         after_data['diff_from_baseline'] = after_data['mean_sentiment'] - before_mean
         
-        # 绘制子图
-        plt.subplot(2, 2, i+1)
-        plt.plot(after_data['time_since_intervention'], after_data['diff_from_baseline'], 'o-')
+        if after_data['diff_from_baseline'].isnull().all():
+            message = f"项目 {program_id} ({program_name}) 基准差异数据全为空。"
+            print(message)
+            ax.text(0.5, 0.5, "基准差异数据为空", ha='center', va='center')
+            ax.set_title(f'项目 {program_id}: {program_name}')
+            append_to_summary_file(
+                summary_file_path,
+                f"干预效果随时间变化 - 项目 {program_id}: {program_name}",
+                content_text=f"错误: {message}"
+            )
+            plot_count += 1
+            continue
+
+        ax.plot(after_data['time_since_intervention'], after_data['diff_from_baseline'], 'o-')
         
-        # 添加趋势线
-        if len(after_data) > 1:
-            z = np.polyfit(after_data['time_since_intervention'], after_data['diff_from_baseline'], 1)
+        analysis_summary_text = ""
+        # Ensure there are at least 2 non-NaN points to fit a line
+        valid_data_for_fit = after_data[['time_since_intervention', 'diff_from_baseline']].dropna()
+        if len(valid_data_for_fit) > 1:
+            z = np.polyfit(valid_data_for_fit['time_since_intervention'], valid_data_for_fit['diff_from_baseline'], 1)
             p = np.poly1d(z)
-            x_line = np.linspace(after_data['time_since_intervention'].min(),
-                                after_data['time_since_intervention'].max(), 100)
-            plt.plot(x_line, p(x_line), '--', color='red')
+            x_line = np.linspace(valid_data_for_fit['time_since_intervention'].min(),
+                                valid_data_for_fit['time_since_intervention'].max(), 100)
+            ax.plot(x_line, p(x_line), '--', color='red')
+            analysis_summary_text += f"趋势线系数 (y = {z[0]:.4f}x + {z[1]:.4f})\n"
+        else:
+            analysis_summary_text += "数据点不足或存在NaN，无法拟合趋势线。\n"
             
-        plt.axhline(y=0, color='black', linestyle='--', alpha=0.5)
-        plt.title(f'项目 {program_id}: {df["program_name"].iloc[0]}')
-        plt.xlabel('干预后月数')
-        plt.ylabel('与基准的差异')
-        plt.grid(True, alpha=0.3)
-    
+        ax.axhline(y=0, color='black', linestyle='--', alpha=0.5)
+        ax.set_title(f'项目 {program_id}: {program_name}')
+        ax.set_xlabel('干预后月数')
+        ax.set_ylabel('与基准的差异')
+        ax.grid(True, alpha=0.3)
+        
+        diff_data_df = after_data[['time_since_intervention', 'diff_from_baseline']].copy()
+        diff_data_df.columns = ['干预后月数', '与基准的差异']
+
+        append_to_summary_file(
+            summary_file_path,
+            f"干预效果随时间变化 - 项目 {program_id}: {program_name}",
+            content_df=diff_data_df,
+            content_text=analysis_summary_text
+        )
+        plot_count +=1
+
+    # Hide any unused subplots
+    for j in range(plot_count, len(axes)):
+        fig.delaxes(axes[j])
+
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, "intervention_effect_over_time.png"), dpi=300, bbox_inches='tight')
     plt.close()
 
 def create_summary_dashboard(program_files, impact_stats):
     """创建汇总仪表盘，展示所有项目的关键指标"""
+    if impact_stats.empty:
+        print("Impact_stats 为空，无法创建汇总仪表盘。")
+        # Optionally, create a placeholder image or skip file saving
+        fig = plt.figure(figsize=(16,12))
+        ax_title = plt.subplot(111)
+        ax_title.text(0.5, 0.5, '项目影响分析汇总仪表盘\n(无可用数据)',
+                 horizontalalignment='center', verticalalignment='center',
+                 fontsize=16, fontweight='bold', color='red')
+        ax_title.axis('off')
+        plt.savefig(os.path.join(output_dir, "summary_dashboard.png"), dpi=300, bbox_inches='tight')
+        plt.close()
+        append_to_summary_file(
+            summary_file_path,
+            "汇总仪表盘 - 关键统计指标表格",
+            content_text="错误: impact_stats 为空，无法生成表格。"
+        )
+        return
+
     fig = plt.figure(figsize=(16, 12))
-    gs = gridspec.GridSpec(3, 2, height_ratios=[1, 2, 1])
+    gs = gridspec.GridSpec(3, 2, height_ratios=[0.5, 2, 1.5]) # Adjusted ratios
     
-    # 顶部标题
     ax_title = plt.subplot(gs[0, :])
     ax_title.text(0.5, 0.5, '项目影响分析汇总仪表盘',
                  horizontalalignment='center', verticalalignment='center',
                  fontsize=20, fontweight='bold')
     ax_title.axis('off')
     
-    # 项目影响对比图
     ax_impact = plt.subplot(gs[1, :])
     programs = impact_stats['program_name']
     mean_diff = impact_stats['mean_diff']
-    colors = ['red' if x < 0 else 'green' for x in mean_diff]
-    bars = ax_impact.bar(programs, mean_diff, color=colors)
+    colors = ['red' if x < 0 else ('grey' if pd.isna(x) else 'green') for x in mean_diff]
+    bars = ax_impact.bar(programs, mean_diff.fillna(0), color=colors)
     
     for bar in bars:
         height = bar.get_height()
+        original_value = mean_diff.iloc[bars.patches.index(bar)]
+        text_label = f'{original_value:.3f}' if pd.notna(original_value) else 'N/A'
         ax_impact.text(bar.get_x() + bar.get_width()/2.,
-                     height + 0.01 if height >= 0 else height - 0.03,
-                     f'{height:.3f}',
+                     height + (0.01 if height >= 0 else -0.03),
+                     text_label,
                      ha='center', va='bottom' if height >= 0 else 'top')
     
     ax_impact.axhline(y=0, color='black', linestyle='-', alpha=0.3)
     ax_impact.set_title('各项目实施前后平均情感得分变化')
     ax_impact.set_ylabel('情感得分变化（实施后 - 实施前）')
     ax_impact.set_xticks(range(len(programs)))
-    ax_impact.set_xticklabels(programs, rotation=45, ha='right')
+    ax_impact.set_xticklabels(programs, rotation=30, ha='right') # Adjusted rotation
     ax_impact.grid(True, axis='y', alpha=0.3)
     
-    # 关键统计指标表格
     ax_stats = plt.subplot(gs[2, :])
     ax_stats.axis('tight')
     ax_stats.axis('off')
     
-    # 准备表格数据
     table_data = []
     headers = ['项目名称', '实施前均值', '实施后均值', '变化量', '实施前样本数', '实施后样本数']
     
     for _, row in impact_stats.iterrows():
         table_data.append([
-            row['program_name'],
-            f"{row['before_mean']:.3f}",
-            f"{row['after_mean']:.3f}",
-            f"{row['mean_diff']:.3f}",
-            str(row['sample_size_before']),
-            str(row['sample_size_after'])
+            str(row['program_name']),
+            f"{row['before_mean']:.3f}" if pd.notna(row['before_mean']) else "N/A",
+            f"{row['after_mean']:.3f}" if pd.notna(row['after_mean']) else "N/A",
+            f"{row['mean_diff']:.3f}" if pd.notna(row['mean_diff']) else "N/A",
+            str(int(row['sample_size_before'])) if pd.notna(row['sample_size_before']) else "N/A",
+            str(int(row['sample_size_after'])) if pd.notna(row['sample_size_after']) else "N/A"
         ])
     
-    # 创建表格
     table = ax_stats.table(cellText=table_data, colLabels=headers,
-                          loc='center', cellLoc='center')
+                          loc='center', cellLoc='center', colWidths=[0.3, 0.1, 0.1, 0.1, 0.1, 0.1]) # Adjusted colWidths
     table.auto_set_font_size(False)
-    table.set_fontsize(10)
-    table.scale(1, 1.5)
+    table.set_fontsize(9) # Adjusted fontsize
+    table.scale(1, 1.8) # Adjusted scale
     
-    # 为表格添加颜色
     for i in range(len(table_data)):
-        # 根据变化量设置颜色
-        change_val = float(table_data[i][3])
-        cell_color = 'lightgreen' if change_val > 0 else 'lightcoral'
-        table[(i+1, 3)].set_facecolor(cell_color)
+        if table_data[i][3] != "N/A":
+            change_val = float(table_data[i][3])
+            cell_color = 'lightgreen' if change_val > 0 else ('lightcoral' if change_val < 0 else 'lightyellow')
+            table[(i+1, 3)].set_facecolor(cell_color)
     
-    plt.tight_layout()
+    plt.tight_layout(pad=2.0) # Added padding
     plt.savefig(os.path.join(output_dir, "summary_dashboard.png"), dpi=300, bbox_inches='tight')
     plt.close()
 
+    # 保存表格数据到文本文件
+    summary_table_text = "关键统计指标:\n"
+    # Create a header string with fixed width for better alignment in text file
+    header_fmt = "{:<30} {:<15} {:<15} {:<10} {:<18} {:<18}\n" # Adjust widths as needed
+    summary_table_text += header_fmt.format(*headers)
+    for row_data in table_data:
+        summary_table_text += header_fmt.format(*row_data)
+
+    append_to_summary_file(
+        summary_file_path,
+        "汇总仪表盘 - 关键统计指标表格",
+        content_text=summary_table_text
+    )
+
 def main():
-    # 加载数据
+    # 新增：在开始分析前，清空或初始化汇总文件
+    with open(summary_file_path, 'w', encoding='utf-8') as f:
+        f.write(f"项目影响分析数据汇总 - 生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+    
     print("加载数据...")
     monthly_all, program_files, daily_all = load_data()
     
-    # 计算项目影响统计数据
     print("计算项目影响统计数据...")
     impact_stats = calculate_impact_statistics(program_files)
+    append_to_summary_file(
+        summary_file_path,
+        "项目影响统计数据 (Impact Statistics)",
+        content_df=impact_stats
+    )
     
-    # 生成各种图表
     print("生成项目实施前后对比图...")
     plot_sentiment_before_after(monthly_all, program_files)
     
@@ -497,6 +749,7 @@ def main():
     create_summary_dashboard(program_files, impact_stats)
     
     print(f"分析完成！所有图表已保存到 {output_dir} 目录")
+    print(f"所有统计数据已汇总到 {summary_file_path}")
 
 if __name__ == "__main__":
     main()
