@@ -181,17 +181,7 @@ def preprocess_data(feedback_dir, program_ids=None):
         
         print(f"Completed data processing for program {program_id} '{program_name}'")
         
-        # Plot original time series and save
-        plt.figure(figsize=(12, 6))
-        plt.plot(weekly_agg['week'].dt.start_time, weekly_agg['mean_sentiment'], marker='o', linestyle='-')
-        plt.axvline(x=intervention_date, color='r', linestyle='--', label='Intervention Point')
-        plt.title(f'Program {program_id}: {program_name} - Weekly Mean Sentiment Score')
-        plt.xlabel('Time')
-        plt.ylabel('Mean Sentiment Score')
-        plt.legend()
-        plt.tight_layout()
-        plt.savefig(f'figures/program_{program_id}_weekly_timeseries.png')
-        plt.close()
+        # 移除绘制和保存每周时间序列图的代码
     
     # Combine all program data
     if all_daily_data:
