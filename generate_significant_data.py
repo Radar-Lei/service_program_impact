@@ -281,14 +281,14 @@ def create_custom_program_data(program_id):
         # 同一车厢不同温度模式 - 温度舒适度相关，干预后明显提升趋势
         return generate_weekly_data(
             program_id, 
-            baseline_level=-0.3, 
-            baseline_trend=0.002,     # 微弱上升趋势
-            level_change=-0.1,         # 中等水平提升
-            trend_change=-0.005,        # 趋势改善
+            baseline_level=0.1, 
+            baseline_trend=0.0015,     # 微弱上升趋势
+            level_change=-0.13,         # 中等水平提升
+            trend_change=-0.0035,        # 趋势改善
             noise_level=0.17,          # 较高噪声
-            seasonality=0.01,           # 中等季节性
-            autocorr=0.3,
-            signal_to_noise=0.8        # 降低信噪比，产生更低的R^2
+            seasonality=0.03,           # 中等季节性
+            autocorr=0.2,
+            signal_to_noise=0.9        # 降低信噪比，产生更低的R^2
         )
     
     elif program_id == 1:
@@ -346,14 +346,14 @@ def create_custom_program_daily_data(program_id):
         # 同一车厢不同温度模式 - 温度舒适度相关，干预后明显提升趋势
         return generate_daily_data(
             program_id, 
-            baseline_level=-0.1, 
-            baseline_trend=0.0002,     # 微弱上升趋势
-            level_change=-0.1,         # 中等水平提升
-            trend_change=-0.0005,      # 趋势改善
+            baseline_level=0.1, 
+            baseline_trend=0.00015,     # 微弱上升趋势
+            level_change=-0.13,         # 中等水平提升
+            trend_change=-0.00035,        # 趋势改善
             noise_level=0.17,          # 较高噪声
-            seasonality=0.01,           # 中等季节性
-            autocorr=0.3,
-            signal_to_noise=0.8        # 降低信噪比，产生更低的R^2
+            seasonality=0.03,           # 中等季节性
+            autocorr=0.2,
+            signal_to_noise=0.9        # 降低信噪比，产生更低的R^2
         )
     
     elif program_id == 1:

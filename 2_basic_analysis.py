@@ -25,7 +25,7 @@ plt.rcParams['axes.unicode_minus'] = False  # For displaying negative signs prop
 sns.set(style="whitegrid", font_scale=1.1)
 
 # 创建输出目录
-output_dir = "analysis_output"
+output_dir = "basic_analysis_output"
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 

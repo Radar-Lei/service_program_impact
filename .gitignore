@@ -32,4 +32,4 @@ processed_data/
 *.pyc
 Related Papers/
 *.csv
-analysis_output/
+basic_analysis_output/
