@@ -15,10 +15,10 @@ else:  # Windows or other systems
 
 # 项目ID和名称（从SPD_SZ_zh.csv中获取）
 PROGRAM_DATA = {
-    0: {"name": "同一车厢不同温度模式", "date": "2020-01-01"},
-    1: {"name": "智能动态地图显示系统", "date": "2020-01-01"},
-    4: {"name": "成功推出乘车码二维码扫码", "date": "2020-01-01"},
-    22: {"name": "降低票价", "date": "2020-07-31"}
+    0: {"name": "Different Temperature Zones in Same Car", "date": "2020-01-01"},
+    1: {"name": "Smart Dynamic Map Display System", "date": "2020-01-01"},
+    4: {"name": "Successful Launch of QR Code Scanning", "date": "2020-01-01"},
+    22: {"name": "Fare Reduction", "date": "2020-07-31"}
 }
 
 def generate_daily_data(program_id, start_date='2019-01-01', end_date='2022-11-15', 
@@ -418,37 +418,37 @@ def save_all_programs():
     all_daily_dfs = []
     
     for program_id in PROGRAM_DATA.keys():
-        print(f"生成项目 {program_id} 的数据...")
+        print(f"Generating data for program {program_id}...")
         
-        # 创建定制周数据
+        # Create custom weekly data
         df_weekly = create_custom_program_data(program_id)
         
-        # 保存周数据
+        # Save weekly data
         df_weekly.to_csv(f'processed_data/program_{program_id}_weekly.csv', index=False)
-        print(f"已保存到 processed_data/program_{program_id}_weekly.csv")        
+        print(f"Saved to processed_data/program_{program_id}_weekly.csv")
         
         # 汇总周数据
         all_weekly_dfs.append(df_weekly)
         
-        # 创建定制每日数据
+        # Create custom daily data
         df_daily = create_custom_program_daily_data(program_id)
         
-        # 保存每日数据
+        # Save daily data
         df_daily.to_csv(f'processed_data/program_{program_id}_daily.csv', index=False)
-        print(f"已保存到 processed_data/program_{program_id}_daily.csv")
+        print(f"Saved to processed_data/program_{program_id}_daily.csv")
         
-        # 汇总每日数据
+        # Aggregate daily data
         all_daily_dfs.append(df_daily)
     
-    # 合并并保存所有周数据
+    # Merge and save all weekly data
     all_weekly_df = pd.concat(all_weekly_dfs, ignore_index=True)
     all_weekly_df.to_csv('processed_data/all_programs_weekly.csv', index=False)
-    print("已保存合并周数据到 processed_data/all_programs_weekly.csv")
+    print("Saved merged weekly data to processed_data/all_programs_weekly.csv")
     
-    # 合并并保存所有每日数据
+    # Merge and save all daily data
     all_daily_df = pd.concat(all_daily_dfs, ignore_index=True)
     all_daily_df.to_csv('processed_data/all_programs_daily.csv', index=False)
-    print("已保存合并每日数据到 processed_data/all_programs_daily.csv")
+    print("Saved merged daily data to processed_data/all_programs_daily.csv")
     
     return all_weekly_dfs, all_daily_dfs
 
@@ -458,7 +458,7 @@ def create_monthly_aggregation():
         # 读取周数据
         weekly_file = f'processed_data/program_{program_id}_weekly.csv'
         if not os.path.exists(weekly_file):
-            print(f"警告: 找不到文件 {weekly_file}")
+            print(f"Warning: File {weekly_file} not found")
             continue
         
         df_weekly = pd.read_csv(weekly_file)
@@ -499,16 +499,16 @@ def create_monthly_aggregation():
         
         # 保存月度数据
         monthly_agg.to_csv(f'processed_data/program_{program_id}_monthly.csv', index=False)
-        print(f"已保存月度数据到 processed_data/program_{program_id}_monthly.csv")
+        print(f"Saved monthly data to processed_data/program_{program_id}_monthly.csv")
     
-    # 合并所有月度数据
+    # Merge all monthly data
     monthly_files = [f'processed_data/program_{pid}_monthly.csv' for pid in PROGRAM_DATA.keys()]
     all_monthly_dfs = [pd.read_csv(f) for f in monthly_files if os.path.exists(f)]
     
     if all_monthly_dfs:
         all_monthly_df = pd.concat(all_monthly_dfs, ignore_index=True)
         all_monthly_df.to_csv('processed_data/all_programs_monthly.csv', index=False)
-        print("已保存合并月度数据到 processed_data/all_programs_monthly.csv")
+        print("Saved merged monthly data to processed_data/all_programs_monthly.csv")
 
 if __name__ == "__main__":
     # 生成所有项目的周数据和每日数据
@@ -517,4 +517,4 @@ if __name__ == "__main__":
     # 生成月度聚合数据
     create_monthly_aggregation()
     
-    print("所有数据生成完成!")
+    print("All data generation completed!")

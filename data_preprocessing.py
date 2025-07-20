@@ -180,8 +180,6 @@ def preprocess_data(feedback_dir, program_ids=None):
         all_monthly_data.append(monthly_agg)
         
         print(f"Completed data processing for program {program_id} '{program_name}'")
-        
-        # 移除绘制和保存每周时间序列图的代码
     
     # Combine all program data
     if all_daily_data:

@@ -286,17 +286,17 @@ def create_overall_density_plot(program_data_list):
         plt.subplot(n_rows, n_cols, i+1)
         
         # 绘制密度图
-        sns.kdeplot(program['pre_data'], label='前干预', shade=True, alpha=0.5)
-        sns.kdeplot(program['post_data'], label='后干预', shade=True, alpha=0.5)
+        sns.kdeplot(program['pre_data'], label='Pre-intervention', shade=True, alpha=0.5)
+        sns.kdeplot(program['post_data'], label='Post-intervention', shade=True, alpha=0.5)
         
         plt.title(f"{program['program_name']}")
-        plt.xlabel('情感得分')
-        plt.ylabel('密度')
+        plt.xlabel('Sentiment Score')
+        plt.ylabel('Density')
         plt.legend()
         plt.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    plt.savefig('figures/overall_density_plots.png')
+    plt.savefig('figures/overall_density_plots.svg')
     plt.close()
 
 def create_overall_visualizations(summary_df):
@@ -327,9 +327,9 @@ def create_overall_visualizations(summary_df):
                  ha='center', va='bottom' if sorted_df['mean_diff'].iloc[i] > 0 else 'top', 
                  fontsize=20)
     
-    ax1.set_title('各项目情感均值变化(后-前)')
-    ax1.set_xlabel('服务项目')
-    ax1.set_ylabel('情感均值差异')
+    ax1.set_title('Sentiment Mean Changes by Program (After - Before)')
+    ax1.set_xlabel('Service Program')
+    ax1.set_ylabel('Sentiment Mean Difference')
     ax1.axhline(y=0, color='black', linestyle='-', alpha=0.3)
     ax1.grid(axis='y', alpha=0.3)
     ax1.set_xticklabels(sorted_df['program_name'], rotation=90)
@@ -350,13 +350,13 @@ def create_overall_visualizations(summary_df):
     max_val = max(summary_df['pre_mean'].max(), summary_df['post_mean'].max())
     ax2.plot([min_val, max_val], [min_val, max_val], 'k--', alpha=0.5)
     
-    ax2.set_title('干预前后情感均值对比')
-    ax2.set_xlabel('干预前均值')
-    ax2.set_ylabel('干预后均值')
+    ax2.set_title('Pre vs Post Intervention Sentiment Mean Comparison')
+    ax2.set_xlabel('Pre-Intervention Mean')
+    ax2.set_ylabel('Post-Intervention Mean')
     ax2.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    plt.savefig('figures/combined_mean_diff_and_scatter.png')
+    plt.savefig('figures/combined_mean_diff_and_scatter.svg')
     plt.close()
 
 if __name__ == "__main__":

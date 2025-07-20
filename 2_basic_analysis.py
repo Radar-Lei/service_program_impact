@@ -86,12 +86,12 @@ def plot_sentiment_before_after(monthly_all, program_files):
     axes = axes.flatten()
     
     program_names = {
-        0: "同车不同温",
-        1: "智能动态地图显示系统",
-        4: "成功推出乘车码二维码扫码",
-        22: "降低票价",
-        5: "完成82个站点卫生间改造",
-        15: "移动母婴室",
+        0: "Different Temperature Zones in Same Car",
+        1: "Smart Dynamic Map Display System",
+        4: "Successful Launch of QR Code Scanning",
+        22: "Fare Reduction",
+        5: "Renovation of 82 Station Restrooms",
+        15: "Mobile Nursing Room",
     }
     
     for i, (program_id, df) in enumerate(program_files.items()):
@@ -102,15 +102,15 @@ def plot_sentiment_before_after(monthly_all, program_files):
         after = df[df['post_intervention'] == 1]
         
         ax = axes[i]
-        ax.plot(before['month'], before['mean_sentiment'], 'o-', color='blue', label='实施前')
-        ax.plot(after['month'], after['mean_sentiment'], 'o-', color='red', label='实施后')
+        ax.plot(before['month'], before['mean_sentiment'], 'o-', color='blue', label='Before Implementation')
+        ax.plot(after['month'], after['mean_sentiment'], 'o-', color='red', label='After Implementation')
         
         intervention_date = df['intervention_date'].iloc[0]
-        ax.axvline(x=intervention_date, color='green', linestyle='--', label='干预日期')
+        ax.axvline(x=intervention_date, color='green', linestyle='--', label='Intervention Date')
         
-        ax.set_title(f'项目 {program_id}: {program_names.get(program_id, f"未知项目 {program_id}")}')
-        ax.set_xlabel('日期')
-        ax.set_ylabel('平均情感得分')
+        ax.set_title(f'Program {program_id}: {program_names.get(program_id, f"Unknown Program {program_id}")}')
+        ax.set_xlabel('Date')
+        ax.set_ylabel('Average Sentiment Score')
         ax.legend()
         ax.grid(True, alpha=0.3)
         
@@ -119,7 +119,7 @@ def plot_sentiment_before_after(monthly_all, program_files):
         plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
     
     plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, "sentiment_before_after.png"), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(output_dir, "sentiment_before_after.svg"), dpi=300, bbox_inches='tight')
     plt.close()
 
 def plot_sentiment_distribution(monthly_all):
@@ -147,17 +147,17 @@ def plot_sentiment_distribution(monthly_all):
         before_data = program_data[program_data['post_intervention'] == 0]['mean_sentiment']
         if not before_data.empty:
             data_to_plot.append(before_data)
-            labels.append(f"{program_name}\n(实施前)")
+            labels.append(f"{program_name}\n(Before Implementation)")
         
         after_data = program_data[program_data['post_intervention'] == 1]['mean_sentiment']
         if not after_data.empty:
             data_to_plot.append(after_data)
-            labels.append(f"{program_name}\n(实施后)")
+            labels.append(f"{program_name}\n(After Implementation)")
     
     if not data_to_plot:
-        plt.text(0.5, 0.5, "无可用数据绘制箱线图", ha='center', va='center')
-        plt.title('各项目实施前后情感得分分布')
-        plt.savefig(os.path.join(output_dir, "sentiment_distribution.png"), dpi=300, bbox_inches='tight')
+        plt.text(0.5, 0.5, "No data available for boxplot", ha='center', va='center')
+        plt.title('Sentiment Score Distribution Before and After Implementation')
+        plt.savefig(os.path.join(output_dir, "sentiment_distribution.svg"), dpi=300, bbox_inches='tight')
         plt.close()
         return
 
@@ -172,8 +172,8 @@ def plot_sentiment_distribution(monthly_all):
     for patch, color in zip(box['boxes'], colors):
         patch.set_facecolor(color)
     
-    plt.title('各项目实施前后情感得分分布')
-    plt.ylabel('平均情感得分')
+    plt.title('Sentiment Score Distribution Before and After Implementation')
+    plt.ylabel('Average Sentiment Score')
     plt.xticks(rotation=45, ha='right')
     plt.grid(True, axis='y', alpha=0.3)
     plt.tight_layout()
@@ -185,15 +185,15 @@ def calculate_impact_statistics(program_files):
     impact_stats = []
     
     program_names_map = {
-        0: "同车不同温", 1: "智能动态地图显示系统", 4: "成功推出乘车码二维码扫码",
-        22: "降低票价", 5: "完成82个站点卫生间改造", 15: "移动母婴室"
+        0: "Different Temperature Zones in Same Car", 1: "Smart Dynamic Map Display System", 4: "Successful Launch of QR Code Scanning",
+        22: "Fare Reduction", 5: "Renovation of 82 Station Restrooms", 15: "Mobile Nursing Room"
     }
 
     for program_id, df in program_files.items():
         before = df[df['post_intervention'] == 0]['mean_sentiment']
         after = df[df['post_intervention'] == 1]['mean_sentiment']
         
-        program_name = program_names_map.get(program_id, f"未知项目 {program_id}")
+        program_name = program_names_map.get(program_id, f"Unknown Program {program_id}")
         if not df.empty and 'program_name' in df.columns and pd.notna(df['program_name'].iloc[0]):
             program_name = df['program_name'].iloc[0]
 
@@ -244,12 +244,12 @@ def plot_impact_comparison(impact_stats):
                  ha='center', va='bottom' if height >= 0 else 'top')
     
     plt.axhline(y=0, color='black', linestyle='-', alpha=0.3)
-    plt.title('各项目实施前后平均情感得分变化')
-    plt.ylabel('情感得分变化（实施后 - 实施前）')
+    plt.title('Average Sentiment Score Changes Before and After Implementation')
+    plt.ylabel('Sentiment Score Change (After - Before)')
     plt.xticks(rotation=45, ha='right')
     plt.grid(True, axis='y', alpha=0.3)
     plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, "impact_comparison.png"), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(output_dir, "impact_comparison.svg"), dpi=300, bbox_inches='tight')
     plt.close()
 
 def plot_time_series_decomposition(program_files):
@@ -257,8 +257,8 @@ def plot_time_series_decomposition(program_files):
     from statsmodels.tsa.seasonal import seasonal_decompose
     
     program_names_map = {
-        0: "同车不同温", 1: "智能动态地图显示系统", 4: "成功推出乘车码二维码扫码",
-        22: "降低票价", 5: "完成82个站点卫生间改造", 15: "移动母婴室"
+        0: "Different Temperature Zones in Same Car", 1: "Smart Dynamic Map Display System", 4: "Successful Launch of QR Code Scanning",
+        22: "Fare Reduction", 5: "Renovation of 82 Station Restrooms", 15: "Mobile Nursing Room"
     }
 
     for program_id, df in program_files.items():
@@ -270,7 +270,7 @@ def plot_time_series_decomposition(program_files):
         ts_data = df.set_index('month')['mean_sentiment']
         
         if len(ts_data) < 24: # 要求至少两个周期的数据进行分解 (period=12)
-            message = f"项目 {program_id} ({program_name}) 数据点不足 ({len(ts_data)})，无法进行周期为12的时间序列分解。"
+            message = f"Program {program_id} ({program_name}) has insufficient data points ({len(ts_data)}) for time series decomposition with period=12."
             print(message)
             append_to_summary_file(
                 summary_file_path,
@@ -286,20 +286,20 @@ def plot_time_series_decomposition(program_files):
             
             ax1 = plt.subplot(411)
             ax1.plot(ts_data.index, ts_data.values)
-            ax1.set_ylabel('原始数据')
-            ax1.set_title(f'项目 {program_id}: {program_name} - 时间序列分解')
+            ax1.set_ylabel('Original Data')
+            ax1.set_title(f'Program {program_id}: {program_name} - Time Series Decomposition')
             
             ax2 = plt.subplot(412)
             ax2.plot(decomposition.trend.index, decomposition.trend.values)
-            ax2.set_ylabel('趋势')
+            ax2.set_ylabel('Trend')
             
             ax3 = plt.subplot(413)
             ax3.plot(decomposition.seasonal.index, decomposition.seasonal.values)
-            ax3.set_ylabel('季节性')
+            ax3.set_ylabel('Seasonality')
             
             ax4 = plt.subplot(414)
             ax4.scatter(decomposition.resid.index, decomposition.resid.values)
-            ax4.set_ylabel('残差')
+            ax4.set_ylabel('Residual')
             
             intervention_date = df['intervention_date'].iloc[0]
             for ax in [ax1, ax2, ax3, ax4]:
@@ -309,14 +309,14 @@ def plot_time_series_decomposition(program_files):
                 plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
             
             plt.tight_layout()
-            plt.savefig(os.path.join(output_dir, f"time_series_decomposition_program_{program_id}.png"), dpi=300, bbox_inches='tight')
+            plt.savefig(os.path.join(output_dir, f"time_series_decomposition_program_{program_id}.svg"), dpi=300, bbox_inches='tight')
             plt.close()
 
             # 保存分解统计信息
             decomposition_summary = (
-                f"趋势 (Trend) 描述:\n{decomposition.trend.describe().to_string()}\n\n"
-                f"季节性 (Seasonal) 描述:\n{decomposition.seasonal.describe().to_string()}\n\n"
-                f"残差 (Residual) 描述:\n{decomposition.resid.describe().to_string()}"
+                f"Trend Description:\n{decomposition.trend.describe().to_string()}\n\n"
+                f"Seasonality Description:\n{decomposition.seasonal.describe().to_string()}\n\n"
+                f"Residual Description:\n{decomposition.resid.describe().to_string()}"
             )
             append_to_summary_file(
                 summary_file_path,
@@ -338,8 +338,8 @@ def plot_sample_size_analysis(program_files):
     plt.figure(figsize=(14, 8))
     
     program_names_map = {
-        0: "同车不同温", 1: "智能动态地图显示系统", 4: "成功推出乘车码二维码扫码",
-        22: "降低票价", 5: "完成82个站点卫生间改造", 15: "移动母婴室"
+        0: "Different Temperature Zones in Same Car", 1: "Smart Dynamic Map Display System", 4: "Successful Launch of QR Code Scanning",
+        22: "Fare Reduction", 5: "Renovation of 82 Station Restrooms", 15: "Mobile Nursing Room"
     }
     
     # 确保子图数量不超过实际项目数或预设上限 (例如2x2=4)
@@ -371,28 +371,28 @@ def plot_sample_size_analysis(program_files):
 
         if not before.empty and not before['sample_size'].isnull().all() and not before['mean_sentiment'].isnull().all():
             ax.scatter(before['sample_size'], before['mean_sentiment'],
-                        label='实施前', alpha=0.7, color='blue')
+                        label='Before Implementation', alpha=0.7, color='blue')
             if len(before.dropna(subset=['sample_size', 'mean_sentiment'])) > 1:
                 z1 = np.polyfit(before['sample_size'].dropna(), before['mean_sentiment'].dropna(), 1)
                 p1 = np.poly1d(z1)
                 # Plot trend line only over the range of actual data points
                 x_before = np.linspace(before['sample_size'].min(), before['sample_size'].max(), 100)
                 ax.plot(x_before, p1(x_before), linestyle='--', color='blue')
-                analysis_summary_text += f"实施前趋势线系数 (y = {z1[0]:.4f}x + {z1[1]:.4f})\n"
+                analysis_summary_text += f"Pre-implementation trend coefficient (y = {z1[0]:.4f}x + {z1[1]:.4f})\n"
         
         if not after.empty and not after['sample_size'].isnull().all() and not after['mean_sentiment'].isnull().all():
             ax.scatter(after['sample_size'], after['mean_sentiment'],
-                        label='实施后', alpha=0.7, color='red')
+                        label='After Implementation', alpha=0.7, color='red')
             if len(after.dropna(subset=['sample_size', 'mean_sentiment'])) > 1:
                 z2 = np.polyfit(after['sample_size'].dropna(), after['mean_sentiment'].dropna(), 1)
                 p2 = np.poly1d(z2)
                 x_after = np.linspace(after['sample_size'].min(), after['sample_size'].max(), 100)
                 ax.plot(x_after, p2(x_after), linestyle='--', color='red')
-                analysis_summary_text += f"实施后趋势线系数 (y = {z2[0]:.4f}x + {z2[1]:.4f})\n"
+                analysis_summary_text += f"Post-implementation trend coefficient (y = {z2[0]:.4f}x + {z2[1]:.4f})\n"
             
-        ax.set_title(f'项目 {program_id}: {program_name}')
-        ax.set_xlabel('样本量')
-        ax.set_ylabel('平均情感得分')
+        ax.set_title(f'Program {program_id}: {program_name}')
+        ax.set_xlabel('Sample Size')
+        ax.set_ylabel('Average Sentiment Score')
         ax.legend()
         ax.grid(True, alpha=0.3)
         
@@ -408,14 +408,14 @@ def plot_sample_size_analysis(program_files):
         fig.delaxes(axes[j])
 
     plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, "sample_size_analysis.png"), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(output_dir, "sample_size_analysis.svg"), dpi=300, bbox_inches='tight')
     plt.close()
 
 def plot_heatmap_monthly_patterns(program_files):
     """绘制月度模式热图，分析不同月份的情感得分模式"""
     program_names_map = {
-        0: "同车不同温", 1: "智能动态地图显示系统", 4: "成功推出乘车码二维码扫码",
-        22: "降低票价", 5: "完成82个站点卫生间改造", 15: "移动母婴室"
+        0: "Different Temperature Zones in Same Car", 1: "Smart Dynamic Map Display System", 4: "Successful Launch of QR Code Scanning",
+        22: "Fare Reduction", 5: "Renovation of 82 Station Restrooms", 15: "Mobile Nursing Room"
     }
 
     for program_id, df in program_files.items():
@@ -424,12 +424,12 @@ def plot_heatmap_monthly_patterns(program_files):
             program_name = df['program_name'].iloc[0]
 
         if df.empty or 'mean_sentiment' not in df.columns or df['mean_sentiment'].isnull().all():
-            message = f"项目 {program_id} ({program_name}) 数据为空或情感得分数据缺失，无法生成热图。"
+            message = f"Program {program_id} ({program_name}) has empty data or missing sentiment scores, cannot generate heatmap."
             print(message)
             append_to_summary_file(
                 summary_file_path,
-                f"月度情感得分模式 - 项目 {program_id}: {program_name}",
-                content_text=f"错误: {message}"
+                f"Monthly Sentiment Score Patterns - Program {program_id}: {program_name}",
+                content_text=f"Error: {message}"
             )
             continue
         
@@ -462,14 +462,14 @@ def plot_heatmap_monthly_patterns(program_files):
 
         plt.figure(figsize=(14, 8))
         sns.heatmap(pivot_data, cmap='RdBu_r', center=0, annot=True, fmt='.2f',
-                    cbar_kws={'label': '平均情感得分'})
+                    cbar_kws={'label': 'Average Sentiment Score'})
         
-        plt.title(f'项目 {program_id}: {program_name} - 月度情感得分模式')
-        plt.xlabel('月份')
-        plt.ylabel('年份')
+        plt.title(f'Program {program_id}: {program_name} - Monthly Sentiment Score Patterns')
+        plt.xlabel('Month')
+        plt.ylabel('Year')
         
-        month_labels = ['一月', '二月', '三月', '四月', '五月', '六月',
-                        '七月', '八月', '九月', '十月', '十一月', '十二月']
+        month_labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
         # Adjust xticks to match available columns in pivot_data
         available_months = sorted(pivot_data.columns.unique())
         plt.xticks(ticks=[available_months.index(m) + 0.5 for m in available_months], 
@@ -488,7 +488,7 @@ def plot_heatmap_monthly_patterns(program_files):
             plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
             
         plt.tight_layout()
-        plt.savefig(os.path.join(output_dir, f"heatmap_monthly_pattern_program_{program_id}.png"), dpi=300, bbox_inches='tight')
+        plt.savefig(os.path.join(output_dir, f"heatmap_monthly_pattern_program_{program_id}.svg"), dpi=300, bbox_inches='tight')
         plt.close()
 
         append_to_summary_file(
@@ -528,14 +528,14 @@ def plot_intervention_effect_over_time(program_files):
         before_sentiment = df[df['post_intervention'] == 0]['mean_sentiment']
         
         if before_sentiment.empty:
-            message = f"项目 {program_id} ({program_name}) 无干预前数据，无法计算基准。"
+            message = f"Program {program_id} ({program_name}) has no pre-intervention data, cannot calculate baseline."
             print(message)
-            ax.text(0.5, 0.5, "无干预前数据", ha='center', va='center')
-            ax.set_title(f'项目 {program_id}: {program_name}')
+            ax.text(0.5, 0.5, "No pre-intervention data", ha='center', va='center')
+            ax.set_title(f'Program {program_id}: {program_name}')
             append_to_summary_file(
                 summary_file_path,
-                f"干预效果随时间变化 - 项目 {program_id}: {program_name}",
-                content_text=f"错误: {message}"
+                f"Intervention Effect Over Time - Program {program_id}: {program_name}",
+                content_text=f"Error: {message}"
             )
             plot_count += 1
             continue
@@ -543,14 +543,14 @@ def plot_intervention_effect_over_time(program_files):
         before_mean = before_sentiment.mean()
         
         if after_data.empty or 'time_since_intervention' not in after_data.columns or 'mean_sentiment' not in after_data.columns:
-            message = f"项目 {program_id} ({program_name}) 无干预后数据或必要列缺失。"
+            message = f"Program {program_id} ({program_name}) has no post-intervention data or missing required columns."
             print(message)
-            ax.text(0.5, 0.5, "无干预后数据", ha='center', va='center')
-            ax.set_title(f'项目 {program_id}: {program_name}')
+            ax.text(0.5, 0.5, "No post-intervention data", ha='center', va='center')
+            ax.set_title(f'Program {program_id}: {program_name}')
             append_to_summary_file(
                 summary_file_path,
-                f"干预效果随时间变化 - 项目 {program_id}: {program_name}",
-                content_text=f"错误: {message}"
+                f"Intervention Effect Over Time - Program {program_id}: {program_name}",
+                content_text=f"Error: {message}"
             )
             plot_count += 1
             continue
@@ -558,14 +558,14 @@ def plot_intervention_effect_over_time(program_files):
         after_data['diff_from_baseline'] = after_data['mean_sentiment'] - before_mean
         
         if after_data['diff_from_baseline'].isnull().all():
-            message = f"项目 {program_id} ({program_name}) 基准差异数据全为空。"
+            message = f"Program {program_id} ({program_name}) baseline difference data is empty."
             print(message)
-            ax.text(0.5, 0.5, "基准差异数据为空", ha='center', va='center')
-            ax.set_title(f'项目 {program_id}: {program_name}')
+            ax.text(0.5, 0.5, "Baseline difference data empty", ha='center', va='center')
+            ax.set_title(f'Program {program_id}: {program_name}')
             append_to_summary_file(
                 summary_file_path,
-                f"干预效果随时间变化 - 项目 {program_id}: {program_name}",
-                content_text=f"错误: {message}"
+                f"Intervention Effect Over Time - Program {program_id}: {program_name}",
+                content_text=f"Error: {message}"
             )
             plot_count += 1
             continue
@@ -581,14 +581,14 @@ def plot_intervention_effect_over_time(program_files):
             x_line = np.linspace(valid_data_for_fit['time_since_intervention'].min(),
                                 valid_data_for_fit['time_since_intervention'].max(), 100)
             ax.plot(x_line, p(x_line), '--', color='red')
-            analysis_summary_text += f"趋势线系数 (y = {z[0]:.4f}x + {z[1]:.4f})\n"
+            analysis_summary_text += f"Trend coefficient (y = {z[0]:.4f}x + {z[1]:.4f})\n"
         else:
-            analysis_summary_text += "数据点不足或存在NaN，无法拟合趋势线。\n"
+            analysis_summary_text += "Insufficient data points or NaN values, cannot fit trend line.\n"
             
         ax.axhline(y=0, color='black', linestyle='--', alpha=0.5)
-        ax.set_title(f'项目 {program_id}: {program_name}')
-        ax.set_xlabel('干预后月数')
-        ax.set_ylabel('与基准的差异')
+        ax.set_title(f'Program {program_id}: {program_name}')
+        ax.set_xlabel('Months After Intervention')
+        ax.set_ylabel('Difference from Baseline')
         ax.grid(True, alpha=0.3)
         
         diff_data_df = after_data[['time_since_intervention', 'diff_from_baseline']].copy()
@@ -607,7 +607,7 @@ def plot_intervention_effect_over_time(program_files):
         fig.delaxes(axes[j])
 
     plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, "intervention_effect_over_time.png"), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(output_dir, "intervention_effect_over_time.svg"), dpi=300, bbox_inches='tight')
     plt.close()
 
 def create_summary_dashboard(program_files, impact_stats):
@@ -617,7 +617,7 @@ def create_summary_dashboard(program_files, impact_stats):
         # Optionally, create a placeholder image or skip file saving
         fig = plt.figure(figsize=(16,12))
         ax_title = plt.subplot(111)
-        ax_title.text(0.5, 0.5, '项目影响分析汇总仪表盘\n(无可用数据)',
+        ax_title.text(0.5, 0.5, 'Service Program Impact Analysis Dashboard\n(No Data Available)',
                  horizontalalignment='center', verticalalignment='center',
                  fontsize=16, fontweight='bold', color='red')
         ax_title.axis('off')
@@ -634,7 +634,7 @@ def create_summary_dashboard(program_files, impact_stats):
     gs = gridspec.GridSpec(3, 2, height_ratios=[0.5, 2, 1.5]) # Adjusted ratios
     
     ax_title = plt.subplot(gs[0, :])
-    ax_title.text(0.5, 0.5, '项目影响分析汇总仪表盘',
+    ax_title.text(0.5, 0.5, 'Service Program Impact Analysis Dashboard',
                  horizontalalignment='center', verticalalignment='center',
                  fontsize=20, fontweight='bold')
     ax_title.axis('off')
@@ -655,8 +655,8 @@ def create_summary_dashboard(program_files, impact_stats):
                      ha='center', va='bottom' if height >= 0 else 'top')
     
     ax_impact.axhline(y=0, color='black', linestyle='-', alpha=0.3)
-    ax_impact.set_title('各项目实施前后平均情感得分变化')
-    ax_impact.set_ylabel('情感得分变化（实施后 - 实施前）')
+    ax_impact.set_title('Average Sentiment Score Changes Before and After Implementation')
+    ax_impact.set_ylabel('Sentiment Score Change (After - Before)')
     ax_impact.set_xticks(range(len(programs)))
     ax_impact.set_xticklabels(programs, rotation=30, ha='right') # Adjusted rotation
     ax_impact.grid(True, axis='y', alpha=0.3)
@@ -666,7 +666,7 @@ def create_summary_dashboard(program_files, impact_stats):
     ax_stats.axis('off')
     
     table_data = []
-    headers = ['项目名称', '实施前均值', '实施后均值', '变化量', '实施前样本数', '实施后样本数']
+    headers = ['Program Name', 'Pre-Implementation Mean', 'Post-Implementation Mean', 'Change', 'Pre-Implementation Sample Size', 'Post-Implementation Sample Size']
     
     for _, row in impact_stats.iterrows():
         table_data.append([
@@ -691,11 +691,11 @@ def create_summary_dashboard(program_files, impact_stats):
             table[(i+1, 3)].set_facecolor(cell_color)
     
     plt.tight_layout(pad=2.0) # Added padding
-    plt.savefig(os.path.join(output_dir, "summary_dashboard.png"), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(output_dir, "summary_dashboard.svg"), dpi=300, bbox_inches='tight')
     plt.close()
 
     # 保存表格数据到文本文件
-    summary_table_text = "关键统计指标:\n"
+    summary_table_text = "Key Statistical Indicators:\n"
     # Create a header string with fixed width for better alignment in text file
     header_fmt = "{:<30} {:<15} {:<15} {:<10} {:<18} {:<18}\n" # Adjust widths as needed
     summary_table_text += header_fmt.format(*headers)
@@ -711,7 +711,7 @@ def create_summary_dashboard(program_files, impact_stats):
 def main():
     # 新增：在开始分析前，清空或初始化汇总文件
     with open(summary_file_path, 'w', encoding='utf-8') as f:
-        f.write(f"项目影响分析数据汇总 - 生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write(f"Service Program Impact Analysis Data Summary - Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
     
     print("加载数据...")
     monthly_all, program_files, daily_all = load_data()

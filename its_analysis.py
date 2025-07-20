@@ -35,12 +35,12 @@ def create_combined_visualization(all_results):
         # Calculate the number of rows and columns for subplots
         n_programs = len(all_results)
         
-        # 优化排列方式：如果是4个项目，使用2×2布局
+        # Optimize layout: use 2×2 for 4 programs
         if n_programs == 4:
             n_cols = 2
             n_rows = 2
         else:
-            # 对于其他数量，计算合适的行列数
+            # Calculate appropriate rows and columns for other counts
             n_cols = min(3, n_programs)  # Maximum 3 columns
             n_rows = (n_programs + n_cols - 1) // n_cols  # Ceiling division
         
@@ -251,11 +251,11 @@ def run_its_analysis(program_ids=None, processed_dir='processed_data'):
     """Run Interrupted Time Series (ITS) analysis for each service program
     
     Args:
-        program_ids (list, optional): 要分析的服务项目ID列表。如果为None，则分析所有项目。
-        processed_dir (str, optional): 处理后数据的目录路径。默认为'processed_data'。
+        program_ids (list, optional): List of service program IDs to analyze. If None, analyze all programs.
+        processed_dir (str, optional): Directory path for processed data. Default is 'processed_data'.
     
     Returns:
-        DataFrame: ITS分析结果摘要数据框
+        DataFrame: ITS analysis summary dataframe
     """
     print("Starting Interrupted Time Series (ITS) analysis...")
     
@@ -267,13 +267,13 @@ def run_its_analysis(program_ids=None, processed_dir='processed_data'):
     
     # Get all weekly data files
     if program_ids is not None:
-        # 只获取指定项目的文件
-        weekly_files = [f'{processed_dir}/program_{pid}_weekly.csv' for pid in program_ids 
+        # Only get files for specified programs
+        weekly_files = [f'{processed_dir}/program_{pid}_weekly.csv' for pid in program_ids
                         if os.path.exists(f'{processed_dir}/program_{pid}_weekly.csv')]
         if not weekly_files:
             print("Warning: No weekly data files found for the specified program IDs")
     else:
-        # 获取所有项目的文件
+        # Get all program files
         weekly_files = glob.glob(f'{processed_dir}/program_*_weekly.csv')
     
     # Create summary dataframe for all ITS results
@@ -284,7 +284,7 @@ def run_its_analysis(program_ids=None, processed_dir='processed_data'):
         'r_squared', 'aic', 'sample_size'
     ])
     
-    # 如果没有找到任何文件，提前返回空的摘要结果
+    # Return empty summary if no files found
     if not weekly_files:
         print("No weekly data files found for ITS analysis")
         return its_summary
@@ -333,7 +333,7 @@ def run_its_analysis(program_ids=None, processed_dir='processed_data'):
     
     # Sort summary by trend change significance and magnitude
     its_summary = its_summary.sort_values(
-        by=['significant_trend_0.05', 'trend_change'], 
+        by=['significant_trend_0.05', 'trend_change'],
         ascending=[False, False]
     )
     
