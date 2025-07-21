@@ -96,7 +96,17 @@ def analyze_program_stats(program_ids=None, processed_dir='processed_data'):
             continue
         
         # Extract program name
-        program_name = df['program_name'].iloc[0] if 'program_name' in df.columns else f"Program {program_id}"
+        # Define standard program name mapping
+        program_names_map = {
+            0: "Temperature Consistency",
+            1: "Smart Map Display",
+            4: "QR Code Payment",
+            5: "Restroom Renovation",
+            15: "Mobile Nursing Rooms",
+            22: "Fare Reduction"
+        }
+        # Override program name with standard mapping
+        program_name = program_names_map.get(program_id, f"Program {program_id}")
         
         # Calculate descriptive statistics
         pre_mean = pre_data.mean()
@@ -296,6 +306,9 @@ def create_overall_density_plot(program_data_list):
         plt.grid(True, alpha=0.3)
     
     plt.tight_layout()
+    # Make SVG text editable
+    plt.rcParams['svg.fonttype'] = 'none'  # Keep text as text objects
+    plt.rcParams['font.family'] = 'sans-serif'  # Use generic font family
     plt.savefig('figures/overall_density_plots.svg')
     plt.close()
 
@@ -356,7 +369,6 @@ def create_overall_visualizations(summary_df):
     ax2.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    plt.savefig('figures/combined_mean_diff_and_scatter.svg')
     plt.close()
 
 if __name__ == "__main__":

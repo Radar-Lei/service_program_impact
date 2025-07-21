@@ -8,9 +8,6 @@ import seaborn as sns
 from matplotlib.font_manager import FontProperties
 import os
 from datetime import datetime
-import matplotlib.dates as mdates
-from matplotlib.ticker import MaxNLocator
-import matplotlib.gridspec as gridspec
 import platform
 
 # 设置中文显示
@@ -83,18 +80,23 @@ def plot_sentiment_distribution(monthly_all):
     labels = []
     
     program_names_map = {
-        0: "同车不同温", 1: "智能动态地图显示系统", 4: "成功推出乘车码二维码扫码",
-        22: "降低票价", 5: "完成82个站点卫生间改造", 15: "移动母婴室"
+        0: "Temperature Consistency",
+        1: "Smart Map Display",
+        4: "QR Code Payment",
+        5: "Restroom Renovation",
+        15: "Mobile Nursing Rooms",
+        22: "Fare Reduction"
     }
 
     for program_id in programs:
         program_data = monthly_all[monthly_all['program_id'] == program_id]
         # Use the map, fall back to a default if program_id not found or name is missing
         program_name = program_names_map.get(program_id, f"项目 {program_id}")
-        if not program_data.empty and 'program_name' in program_data.columns:
-             # Prefer actual name from data if available and consistent
-            actual_name = program_data['program_name'].iloc[0]
-            if pd.notna(actual_name) : program_name = actual_name
+        # 强制使用program_names_map中的英文名称
+        # 注释掉数据名称覆盖逻辑
+        # if not program_data.empty and 'program_name' in program_data.columns:
+        #     actual_name = program_data['program_name'].iloc[0]
+        #     if pd.notna(actual_name) : program_name = actual_name
 
         before_data = program_data[program_data['post_intervention'] == 0]['mean_sentiment']
         if not before_data.empty:
@@ -109,6 +111,9 @@ def plot_sentiment_distribution(monthly_all):
     if not data_to_plot:
         plt.text(0.5, 0.5, "No data available for boxplot", ha='center', va='center')
         plt.title('Sentiment Score Distribution Before and After Implementation')
+        # Make SVG text editable
+        plt.rcParams['svg.fonttype'] = 'none'  # Keep text as text objects
+        plt.rcParams['font.family'] = 'sans-serif'  # Use generic font family
         plt.savefig(os.path.join(output_dir, "sentiment_distribution.svg"), dpi=300, bbox_inches='tight')
         plt.close()
         return
@@ -129,6 +134,9 @@ def plot_sentiment_distribution(monthly_all):
     plt.xticks(rotation=45, ha='right')
     plt.grid(True, axis='y', alpha=0.3)
     plt.tight_layout()
+    # Make SVG text editable
+    plt.rcParams['svg.fonttype'] = 'none'  # Keep text as text objects
+    plt.rcParams['font.family'] = 'sans-serif'  # Use generic font family
     plt.savefig(os.path.join(output_dir, "sentiment_distribution.svg"), dpi=300, bbox_inches='tight')
     plt.close()
 
@@ -137,8 +145,12 @@ def calculate_impact_statistics(program_files):
     impact_stats = []
     
     program_names_map = {
-        0: "Different Temperature Zones in Same Car", 1: "Smart Dynamic Map Display System", 4: "Successful Launch of QR Code Scanning",
-        22: "Fare Reduction", 5: "Renovation of 82 Station Restrooms", 15: "Mobile Nursing Room"
+        0: "Temperature Consistency",
+        1: "Smart Map Display",
+        4: "QR Code Payment",
+        5: "Restroom Renovation",
+        15: "Mobile Nursing Rooms",
+        22: "Fare Reduction"
     }
 
     for program_id, df in program_files.items():
@@ -146,8 +158,9 @@ def calculate_impact_statistics(program_files):
         after = df[df['post_intervention'] == 1]['mean_sentiment']
         
         program_name = program_names_map.get(program_id, f"Unknown Program {program_id}")
-        if not df.empty and 'program_name' in df.columns and pd.notna(df['program_name'].iloc[0]):
-            program_name = df['program_name'].iloc[0]
+        # 强制使用program_names_map中的英文名称
+        # if not df.empty and 'program_name' in df.columns and pd.notna(df['program_name'].iloc[0]):
+        #     program_name = df['program_name'].iloc[0]
 
         stats = {
             'program_id': program_id,
@@ -177,8 +190,12 @@ def plot_sample_size_analysis(program_files):
     plt.figure(figsize=(14, 8))
     
     program_names_map = {
-        0: "Different Temperature Zones in Same Car", 1: "Smart Dynamic Map Display System", 4: "Successful Launch of QR Code Scanning",
-        22: "Fare Reduction", 5: "Renovation of 82 Station Restrooms", 15: "Mobile Nursing Room"
+        0: "Temperature Consistency",
+        1: "Smart Map Display",
+        4: "QR Code Payment",
+        5: "Restroom Renovation",
+        15: "Mobile Nursing Rooms",
+        22: "Fare Reduction"
     }
     
     # 确保子图数量不超过实际项目数或预设上限 (例如2x2=4)
@@ -200,8 +217,9 @@ def plot_sample_size_analysis(program_files):
         ax = axes[plot_count]
         
         program_name = program_names_map.get(program_id, f"未知项目 {program_id}")
-        if not df.empty and 'program_name' in df.columns and pd.notna(df['program_name'].iloc[0]):
-            program_name = df['program_name'].iloc[0]
+        # 强制使用program_names_map中的英文名称
+        # if not df.empty and 'program_name' in df.columns and pd.notna(df['program_name'].iloc[0]):
+        #     program_name = df['program_name'].iloc[0]
 
         before = df[df['post_intervention'] == 0]
         after = df[df['post_intervention'] == 1]
@@ -247,6 +265,9 @@ def plot_sample_size_analysis(program_files):
         fig.delaxes(axes[j])
 
     plt.tight_layout()
+    # Make SVG text editable
+    plt.rcParams['svg.fonttype'] = 'none'  # Keep text as text objects
+    plt.rcParams['font.family'] = 'sans-serif'  # Use generic font family
     plt.savefig(os.path.join(output_dir, "sample_size_analysis.svg"), dpi=300, bbox_inches='tight')
     plt.close()
 

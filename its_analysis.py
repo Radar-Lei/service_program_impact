@@ -239,8 +239,10 @@ def create_combined_visualization(all_results):
         # Adjust layout
         plt.tight_layout()
         
-        # Save figure
-        plt.savefig('figures/its/combined_its_analysis.png', dpi=300, bbox_inches='tight')
+        # Save figure with editable text
+        plt.rcParams['svg.fonttype'] = 'none'  # Keep text as text objects
+        plt.rcParams['font.family'] = 'sans-serif'  # Use generic font family
+        plt.savefig('figures/its/combined_its_analysis.svg', bbox_inches='tight')
         plt.close()
         
     except Exception as e:
@@ -299,6 +301,18 @@ def run_its_analysis(program_ids=None, processed_dir='processed_data'):
         # Load program data
         df = pd.read_csv(file_path)
         
+        # Define standard program name mapping
+        program_names_map = {
+            0: "Temperature Consistency",
+            1: "Smart Map Display",
+            4: "QR Code Payment",
+            5: "Restroom Renovation",
+            15: "Mobile Nursing Rooms",
+            22: "Fare Reduction"
+        }
+        # Override program name with standard mapping
+        program_name = program_names_map.get(program_id, f"Program {program_id}")
+        
         if len(df) < 10:  # We need sufficient data points for ITS
             print(f"Warning: Insufficient data points for ITS analysis for program {program_id}")
             continue
@@ -311,9 +325,6 @@ def run_its_analysis(program_ids=None, processed_dir='processed_data'):
         if 1 not in df['post_intervention'].values or 0 not in df['post_intervention'].values:
             print(f"Warning: Need both pre and post intervention data for program {program_id}")
             continue
-        
-        # Get program name
-        program_name = df['program_name'].iloc[0] if 'program_name' in df.columns else f"Program {program_id}"
         
         try:
             # Run ITS analysis for this program

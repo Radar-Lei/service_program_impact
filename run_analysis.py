@@ -500,7 +500,17 @@ def analyze_program_stats_daily(program_ids=None, processed_dir='processed_data'
             continue
         
         # Extract program name
-        program_name = df['program_name'].iloc[0] if 'program_name' in df.columns else f"Program {program_id}"
+        # 定义标准项目名称映射
+        program_names_map = {
+            0: "Temperature Consistency",
+            1: "Smart Map Display",
+            4: "QR Code Payment",
+            5: "Restroom Renovation",
+            15: "Mobile Nursing Rooms",
+            22: "Fare Reduction"
+        }
+        # 使用映射覆盖数据框中的项目名称
+        program_name = program_names_map.get(program_id, f"Program {program_id}")
         
         # Calculate descriptive statistics
         pre_mean = pre_data.mean()
