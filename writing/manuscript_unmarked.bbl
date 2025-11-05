@@ -1,4 +1,4 @@
-\begin{thebibliography}{81}
+\begin{thebibliography}{83}
 \expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
 \providecommand{\url}[1]{\texttt{#1}}
 \providecommand{\href}[2]{#2}
@@ -241,6 +241,11 @@
 \newblock \bibinfo{title}{Comparative analysis of metro ridership before and after covid-19: A case study of shenzhen}.
 \newblock \bibinfo{journal}{Transportation Research Part A: Policy and Practice} \bibinfo{volume}{155}, \bibinfo{pages}{1--15}.
 %Type = Article
+\bibitem[{Liu and Ban(2017)}]{liu2017monitoring}
+\bibinfo{author}{Liu, X.C.}, \bibinfo{author}{Ban, X.}, \bibinfo{year}{2017}.
+\newblock \bibinfo{title}{Monitoring transit service performance with social media: An application to the chicago transit authority}.
+\newblock \bibinfo{journal}{Transportation Research Record} \bibinfo{volume}{2649}, \bibinfo{pages}{42--50}.
+%Type = Article
 \bibitem[{Lopez~Bernal et~al.(2016)Lopez~Bernal, Cummins and Gasparrini}]{lopez2016interrupted}
 \bibinfo{author}{Lopez~Bernal, J.}, \bibinfo{author}{Cummins, S.}, \bibinfo{author}{Gasparrini, A.}, \bibinfo{year}{2016}.
 \newblock \bibinfo{title}{Interrupted time series regression for the evaluation of public health interventions: a tutorial}.
@@ -270,6 +275,11 @@
 \bibinfo{author}{Maeda, T.}, \bibinfo{author}{Takashi, K.}, \bibinfo{author}{Kamino, K.}, \bibinfo{author}{Wang, C.H.}, \bibinfo{author}{Motoyama, M.}, \bibinfo{author}{Uchida, Y.}, \bibinfo{author}{Nishiyama, H.}, \bibinfo{year}{2019}.
 \newblock \bibinfo{title}{Transportation mode identification from mobility data using convolutional neural networks}.
 \newblock \bibinfo{journal}{IEEE Access} \bibinfo{volume}{7}, \bibinfo{pages}{122954--122963}.
+%Type = Article
+\bibitem[{Mathur et~al.(2021)Mathur, Zhang and Ukkusuri}]{mathur2021exploratory}
+\bibinfo{author}{Mathur, S.}, \bibinfo{author}{Zhang, Y.}, \bibinfo{author}{Ukkusuri, S.V.}, \bibinfo{year}{2021}.
+\newblock \bibinfo{title}{An exploratory analysis of social media for transit service evaluation: Opportunities and challenges}.
+\newblock \bibinfo{journal}{Transportation Research Part C: Emerging Technologies} \bibinfo{volume}{125}, \bibinfo{pages}{103067}.
 %Type = Article
 \bibitem[{Mead(2021)}]{mead2021road}
 \bibinfo{author}{Mead, L.}, \bibinfo{year}{2021}.

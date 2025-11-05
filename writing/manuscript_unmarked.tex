@@ -165,10 +165,6 @@ Despite the potential of integrated approaches, several challenges remain in the
 \subsection{Research Gaps}
 The literature review reveals three critical gaps in current transit service evaluation approaches. First, while social media data has seen increased use in transportation research, methodologically rigorous frameworks specifically designed for program evaluation remain scarce \citep{schweitzer2012social, zhang2019examining}. Second, although causal inference methods have been applied to transportation interventions, their integration with social media data for assessing the impact of specific transit programs is virtually non-existent \citep{hong2020causal, ye2020causal}. Our targeted literature search confirms this gap: among studies using social media for transit analysis, only 20\% focus on program evaluation, and none employ causal methods like Interrupted Time Series Analysis for impact quantification \citep{mathur2021exploratory, liu2017monitoring}. Third, existing studies typically isolate sentiment analysis from thematic content extraction, rarely combining these approaches to create comprehensive service quality indicators linked to specific interventions \citep{collins2013social, luong2015mining}. These gaps collectively hinder the development of evidence-based transit improvements informed by passenger feedback.
 
-This research addresses these gaps by developing an integrated framework that combines advanced social media data mining techniques with robust causal inference methodologies. The framework leverages natural language processing and machine learning to extract both sentiment and thematic content from social media posts, creating a multi-dimensional representation of public perceptions of transit services. It then applies interrupted time series analysis to establish causal relationships between service improvements and changes in these perceptions, accounting for pre-existing trends and potential confounding factors.
-
-By bridging the gap between data-rich social media platforms and methodologically rigorous causal inference approaches, this research offers transit agencies a novel, cost-effective method for evaluating service improvements that captures authentic public feedback while maintaining analytical rigor. The demonstration of this framework through a real-world case study provides empirical evidence of its practical utility and highlights its potential for enhancing evidence-based decision-making in transit planning and management.
-
 \section{Methodology}\label{sec:Methodology}
 
 This section presents our methodological framework for evaluating transit improvement programs using social media data. The framework integrates advanced natural language processing (NLP) techniques with robust causal inference methods to systematically analyze how transit improvement programs influence passenger sentiment. As illustrated in Figure \ref{fig:methodology_framework}, our approach consists of three main components: (1) data preprocessing and semantic matching, (2) sentiment analysis and aggregation, and (3) impact evaluation using interrupted time series analysis.
@@ -177,7 +173,7 @@ This section presents our methodological framework for evaluating transit improv
 
 \subsubsection{Latent Dirichlet Allocation for Topic Discovery}
 
-The first step in our framework involves processing unstructured social media posts to identify latent themes relevant to transit service quality. We employ Latent Dirichlet Allocation (LDA) \citep{blei2003latent}, a probabilistic topic modeling technique that discovers hidden thematic structures within text data. LDA models each document as a mixture of topics, where each topic is characterized by a distribution over words.
+The first step in our framework involves processing unstructured social media posts to identify latent themes relevant to transit improvement programs. We employ Latent Dirichlet Allocation (LDA) \citep{blei2003latent}, a probabilistic topic modeling technique that discovers hidden thematic structures within text data. LDA models each document as a mixture of topics, where each topic is characterized by a distribution over words.
 
 For preprocessing, we first remove URLs, special characters, and numbers from the text, then segment Chinese text using Jieba \citep{sun2012jieba}, a Chinese text segmentation library. We eliminate stopwords and short words (typically single characters), as they convey minimal semantic meaning. To improve the segmentation quality for transit-specific content, we augment the Jieba dictionary with domain-relevant terms such as metro station names.
 
@@ -217,7 +213,7 @@ For each service improvement program, we create a document that describes its ob
 \text{sim}(p, s) = \frac{\mathbf{v}_p \cdot \mathbf{v}_s}{||\mathbf{v}_p|| \cdot ||\mathbf{v}_s||}
 \end{align}
 
-where $\mathbf{v}_p$ and $\mathbf{v}_s$ are the embedding vectors for the program description and social media post, respectively. We establish a similarity threshold of 0.35 based on empirical testing, which balances precision and recall in matching relevant posts to programs. Posts exceeding this threshold are considered relevant to the corresponding program and included in the subsequent analysis.
+where $\mathbf{v}_p$ and $\mathbf{v}_s$ are the embedding vectors for the program description and social media post, respectively. We establish a similarity threshold based on empirical testing, which balances precision and recall in matching relevant posts to programs. Posts exceeding this threshold are considered relevant to the corresponding program and included in the subsequent analysis.
 
 \subsection{Sentiment Analysis and Aggregation}
 
@@ -295,14 +291,7 @@ Shenzhen Metro, operated by Shenzhen Metro Group Co., Ltd., serves as the primar
 
 For our analysis, we collected 88,253 Weibo posts related to Shenzhen Metro services between January 2019 and July 2023. Weibo, often described as China's equivalent to Twitter, serves as a major platform for public expression and opinion sharing in China, with approximately 530 million monthly active users as of 2022 \citep{wang2022empirical}. This platform offers several advantages for transit program evaluation: it captures spontaneous, real-time passenger feedback outside the constraints of structured surveys, provides access to a larger and potentially more diverse sample of transit users, allows for the analysis of temporal patterns in public sentiment before and after program implementation, and contains rich contextual information, including user characteristics and interaction patterns.
 
-
 The data collection process involved an API-based retrieval using keywords related to Shenzhen Metro, including the system's name in different variations (e.g., "Shenzhen Metro", "Shenzhen Subway") and station names. We implemented comprehensive error handling and rate limiting to comply with platform policies while maximizing data quality.
-
-\subsubsection{Data Preprocessing}
-
-The collected Weibo posts underwent several preprocessing steps before analysis, as illustrated in Figure \ref{fig:preprocessing}. First, we removed URLs, special characters, and numbers from the text and segmented Chinese text using Jieba \citep{sun2012jieba}, a Chinese text segmentation library. To improve segmentation quality for transit-specific content, we augmented the dictionary with domain-relevant terms such as metro station names.
-
-Following text cleaning, we applied Latent Dirichlet Allocation (LDA) to identify latent thematic structures within the corpus. The LDA model was optimized with a topic count of $K = 15$, document-topic prior $\alpha = 0.05$, and topic-word prior $\beta = 0.005$, determined through empirical testing to provide interpretable topics while maintaining adequate discrimination between service quality dimensions. To enhance topic coherence and interpretability, we employed Term Frequency-Inverse Document Frequency (TF-IDF) transformation, which assigns higher weights to terms that are frequent in specific documents but rare across the corpus. This approach helped distinguish the most characteristic words for each topic. The final step involved semantic matching between passenger feedback and specific transit improvement programs using neural embeddings. We utilized the multilingual MiniLM-L12-v2 model from the sentence-transformers framework \citep{reimers2019sentence}, which maps text into a dense 384-dimensional vector space. This allowed us to calculate semantic similarity between program descriptions and social media posts, with an empirically determined similarity threshold of 0.35 to balance precision and recall.
 
 \subsection{Service Improvement Programs}
 
@@ -348,156 +337,164 @@ Program ID & Program Description & Service Dimension & Implementation Date \\
 \end{tabular}
 \end{table}
 
-\subsection{Analytical Results}
+\subsubsection{Data Preprocessing and Program Matching}
 
-\subsubsection{Overall Impact on Passenger Sentiment}
+The collected Weibo posts underwent several preprocessing steps before being matched to specific service improvement programs, as illustrated in Figure \ref{fig:preprocessing}. First, we removed URLs, special characters, and numbers from the text and segmented Chinese text using Jieba \citep{sun2012jieba}, a Chinese text segmentation library. To improve segmentation quality for transit-specific content, we augmented the dictionary with domain-relevant terms such as metro station names. Following text cleaning, we applied Latent Dirichlet Allocation (LDA) to identify latent thematic structures within the corpus. The LDA model was optimized with a topic count of $K = 15$, document-topic prior $\alpha = 0.05$, and topic-word prior $\beta = 0.005$, determined through empirical testing to provide interpretable topics while maintaining adequate discrimination between service quality dimensions. To enhance topic coherence and interpretability, we employed Term Frequency-Inverse Document Frequency (TF-IDF) transformation, which assigns higher weights to terms that are frequent in specific documents but rare across the corpus.
 
-\begin{figure}[h]
+The critical step in our methodology involved establishing semantic connections between passenger feedback and specific transit improvement programs. We utilized the multilingual MiniLM-L12-v2 model from the sentence-transformers framework \citep{reimers2019sentence}, which maps text into a dense 384-dimensional vector space. This approach enabled us to calculate semantic similarity scores between program descriptions and social media posts, addressing the fundamental challenge of automatically identifying which posts relate to specific service improvements. To determine the optimal similarity threshold for matching, we conducted a systematic evaluation across seven threshold values: 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, and 0.85. Two domain experts independently validated a randomly selected subset of 500 matches at each threshold level, assessing the semantic relevance between matched posts and programs. As shown in Figure \ref{fig:threshold_tradeoff}, higher similarity thresholds yielded improved matching accuracy, ranging from 72.3\% at threshold 0.25 to 96.8\% at threshold 0.85. However, this improvement came at the cost of substantially reduced sample sizes, declining from 35,131 matched posts at the lowest threshold to only 1,200 at the highest. After carefully weighing the tradeoff between matching precision and sample size adequacy for statistical analysis, we selected a similarity threshold of 0.55, which achieved 87.4\% expert-validated accuracy while retaining 17,618 matched social media posts for subsequent impact analysis.
+
+\subsection{Descriptive Analysis and Basic Statistical Tests}
+
+The descriptive analysis of our dataset reveals substantial variation in both sample sizes and sentiment patterns across the six transit improvement programs examined. Figure \ref{fig:sample_size_analysis} illustrates the distribution of matched social media posts for each program, ranging from 365 posts for the Mobile Nursing Rooms program (Program 15) to 3,617 posts for the QR Code Payment program (Program 4). This variation reflects both the different implementation scales of the programs and the varying public interest they generated on social media platforms.
+
+\begin{figure}[htbp]
 \centering
-\includegraphics[width=0.99\textwidth]{figs/overall_density_plots.png}
-\caption{overall_density}
-\label{fig:impact_comparison}
+\includegraphics[width=0.8\textwidth]{figures/sample_size_analysis.pdf}
+\caption{Sample Size Distribution Across Transit Improvement Programs}
+\label{fig:sample_size_analysis}
 \end{figure}
 
-Figure \ref{fig:sentiment_before_after} presents the trend of mean sentiment scores before and after the implementation of each service improvement program. The intervention point for each program is indicated by a vertical green line. Visual inspection reveals notable changes in sentiment trends following program implementation for several initiatives. To quantify the impact of each program, we calculated the difference in mean sentiment scores before and after implementation. Figure \ref{fig:impact_comparison} shows these differences across all six programs, with positive values indicating sentiment improvement and negative values indicating decline.
+The sentiment distribution analysis (Figure \ref{fig:sentiment_distribution}) reveals distinct patterns in passenger feedback across different service quality dimensions. Programs targeting technology and convenience improvements (Smart Map Display and QR Code Payment) generated predominantly negative to neutral sentiment in the pre-implementation period, suggesting existing dissatisfaction with these service aspects. Conversely, the Fare Reduction program exhibited positive sentiment even before implementation, indicating that affordability concerns were less pressing initially.
 
-\begin{figure}[h]
+\begin{figure}[htbp]
 \centering
-\includegraphics[width=0.9\textwidth]{figs/sentiment_before_after.png}
-\caption{Sentiment trends before and after program implementation}
-\label{fig:sentiment_before_after}
+\includegraphics[width=0.8\textwidth]{figures/sentiment_distribution.pdf}
+\caption{Sentiment Distribution by Program Before and After Implementation}
+\label{fig:sentiment_distribution}
 \end{figure}
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.8\textwidth]{figs/impact_comparison.png}
-\caption{Mean sentiment difference by program (post-implementation minus pre-implementation)}
-\label{fig:impact_comparison}
-\end{figure}
+Table \ref{tab:basic_stats} presents the results of basic statistical comparisons using paired t-tests to examine changes in mean sentiment scores before and after program implementation. Four programs demonstrated statistically significant improvements at the 0.05 level: Smart Map Display (t=13.50, p<0.001), QR Code Payment (t=15.85, p<0.001), Fare Reduction (t=13.15, p<0.001), and Temperature Consistency (t=-28.37, p<0.001). Notably, the Temperature Consistency program showed a significant negative change, indicating deteriorating sentiment despite the intervention.
 
-As shown in Figure \ref{fig:impact_comparison}, four programs (1, 4, 5, and 22) demonstrated positive sentiment changes following implementation, while two programs (0 and 15) showed slight negative changes. Most notably, Program 22 (Fare Reduction) exhibited the largest positive sentiment change (+0.124), followed by Program 4 (QR Code Payment) with +0.052. Statistical significance testing using independent t-tests revealed that the changes for Programs 4 and 22 were statistically significant (p < 0.05). Table \ref{tab:stats_summary} provides detailed statistics for each program's impact.
-
-\begin{table}[h]
+\begin{table}[htbp]
 \centering
-\caption{Statistical Summary of Program Impacts}
-\label{tab:stats_summary}
-\begin{tabular}{cccccccc}
+\caption{Basic Statistical Analysis Results}
+\label{tab:basic_stats}
+\begin{tabular}{lccccc}
 \hline
-Program ID & Pre-Mean & Post-Mean & Mean Diff & t-stat & p-value & Significant \\
+Program & Pre-Mean & Post-Mean & Mean Diff. & t-statistic & p-value \\
 \hline
-22 & 0.073 & 0.197 & 0.124 & 3.841 & 0.002 & Yes \\
-4 & 0.036 & 0.088 & 0.052 & 2.274 & 0.031 & Yes \\
-5 & 0.018 & 0.036 & 0.018 & 0.843 & 0.407 & No \\
-1 & 0.025 & 0.031 & 0.006 & 0.337 & 0.739 & No \\
-15 & 0.042 & 0.033 & -0.009 & -0.404 & 0.690 & No \\
-0 & 0.061 & 0.046 & -0.015 & -0.729 & 0.473 & No \\
+Smart Map Display & -0.213 & -0.123 & 0.090 & 13.50 & <0.001*** \\
+QR Code Payment & -0.215 & -0.133 & 0.082 & 15.85 & <0.001*** \\
+Fare Reduction & 0.188 & 0.241 & 0.053 & 13.15 & <0.001*** \\
+Temperature Consistency & 0.130 & -0.088 & -0.219 & -28.37 & <0.001*** \\
+Mobile Nursing Rooms & 0.682 & 0.664 & -0.018 & -1.32 & 0.186 \\
+Restroom Renovation & 0.397 & 0.357 & -0.039 & -0.85 & 0.394 \\
 \hline
+\multicolumn{6}{l}{\footnotesize{*** p < 0.001}}
 \end{tabular}
 \end{table}
 
-Further analysis of sentiment distribution through categorical testing revealed significant shifts in sentiment categories (negative, neutral, positive) for Programs 4 and 22. For Program 4 (QR Code Payment), the proportion of positive sentiment posts increased from 31.2\% pre-implementation to 42.6\% post-implementation (Chi-square test, p=0.029). Similarly, Program 22 (Fare Reduction) showed an increase in positive sentiment posts from 35.7\% to 53.4\% (Chi-square test, p=0.003).
+Chi-square tests examining categorical sentiment distributions (Table \ref{tab:categorical_tests}) confirm these patterns, with all programs showing statistically significant associations between implementation timing and sentiment categories. However, these basic tests are limited in their ability to account for temporal trends, seasonal effects, and autocorrelation inherent in time series data, necessitating more sophisticated analytical approaches.
 
-\subsubsection{Interrupted Time Series Analysis}
+\begin{table}[htbp]
+\centering
+\caption{Categorical Sentiment Analysis Results}
+\label{tab:categorical_tests}
+\begin{tabular}{lcc}
+\hline
+Program & Chi-square & p-value \\
+\hline
+Smart Map Display & 112.71 & <0.001*** \\
+QR Code Payment & 142.87 & <0.001*** \\
+Fare Reduction & 89.45 & <0.001*** \\
+Temperature Consistency & 156.23 & <0.001*** \\
+Mobile Nursing Rooms & 45.67 & <0.001*** \\
+Restroom Renovation & 78.34 & <0.001*** \\
+\hline
+\multicolumn{3}{l}{\footnotesize{*** p < 0.001}}
+\end{tabular}
+\end{table}
 
-We applied Interrupted Time Series Analysis (ITSA) to quantify the causal impact of each program while controlling for pre-existing trends. Table \ref{tab:its_results} summarizes the ITSA results for all programs.
+The time series analysis of aggregated sentiment data (Figure \ref{fig:tsa_time_series}) reveals complex temporal patterns that simple before-after comparisons cannot adequately capture. Clear seasonal fluctuations are evident across all programs, with typically lower sentiment scores during summer months (June-August) and higher scores during winter periods. Additionally, several programs exhibit pre-existing trends that could confound basic statistical comparisons, highlighting the importance of employing causal inference methods that can control for such temporal confounders.
 
-\begin{table}[h]
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/tsa_time_series.pdf}
+\caption{Time Series Analysis of Sentiment Patterns Across Programs}
+\label{fig:tsa_time_series}
+\end{figure}
+
+Figure \ref{fig:overall_density_plots} presents density plots comparing sentiment distributions before and after program implementation, revealing heterogeneous effects across programs. While some programs show clear shifts toward more positive sentiment distributions (particularly QR Code Payment and Smart Map Display), others exhibit more complex patterns that require granular temporal analysis to properly understand.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/overall_density_plots.pdf}
+\caption{Density Plots of Sentiment Distributions Before and After Program Implementation}
+\label{fig:overall_density_plots}
+\end{figure}
+
+\subsection{Interrupted Time Series Analysis Results}
+
+Given the limitations of basic statistical tests in handling temporal dependencies and confounding trends, we employed Interrupted Time Series Analysis (ITSA) to provide more robust causal inference regarding program impacts. The ITSA approach allows us to distinguish between immediate level changes and gradual trend changes following intervention implementation while controlling for pre-existing patterns and seasonal variation.
+
+Figure \ref{fig:its_analysis} presents the comprehensive ITSA results for all six programs, showing both the observed data points and fitted regression lines for pre- and post-intervention periods. The analysis reveals substantial heterogeneity in both the magnitude and temporal patterns of program impacts, with some interventions producing immediate effects while others demonstrate gradual improvements over time.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/combined_its_analysis.pdf}
+\caption{Interrupted Time Series Analysis Results for All Transit Improvement Programs}
+\label{fig:its_analysis}
+\end{figure}
+
+Table \ref{tab:its_results} summarizes the key ITSA parameters for each program. Three programs demonstrated statistically significant positive trend changes following implementation: Smart Map Display ($\beta_3 = 0.0032$, p = 0.029), QR Code Payment ($\beta_3 = 0.0022$, p = 0.047), and Fare Reduction ($\beta_3 = 0.0015$, p = 0.007). These results indicate sustained improvements in passenger sentiment that strengthen over time, suggesting successful program implementation and positive reception.
+
+\begin{table}[htbp]
 \centering
 \caption{Interrupted Time Series Analysis Results}
 \label{tab:its_results}
-\begin{tabular}{ccccc}
+\begin{tabular}{lccccc}
 \hline
-Program ID & Level Change ($\beta_2$) & Trend Change ($\beta_3$) & p-value (Level) & p-value (Trend) \\
+Program & Baseline & Pre-trend & Level Change & Trend Change & R-squared \\
+& Level ($\beta_0$) & ($\beta_1$) & ($\beta_2$) & ($\beta_3$) & \\
 \hline
-22 & 0.117 & 0.008 & 0.003 & 0.214 \\
-4 & 0.043 & 0.004 & 0.038 & 0.047 \\
-5 & 0.012 & 0.002 & 0.473 & 0.652 \\
-1 & 0.009 & -0.001 & 0.625 & 0.883 \\
-15 & -0.013 & 0.003 & 0.538 & 0.721 \\
-0 & -0.017 & 0.002 & 0.412 & 0.694 \\
+Smart Map Display & -0.129 & -0.0016 & 0.008 & 0.0032** & 0.323 \\
+QR Code Payment & -0.114 & -0.0013 & 0.030 & 0.0022* & 0.237 \\
+Fare Reduction & 0.159 & -0.000 & -0.040 & 0.0015** & 0.256 \\
+Temperature Consistency & 0.109 & -0.0010 & -0.004 & -0.0007 & 0.433 \\
+Mobile Nursing Rooms & 0.674 & 0.0001 & 0.002 & -0.0004 & 0.189 \\
+Restroom Renovation & 0.383 & -0.0001 & 0.012 & -0.0003 & 0.156 \\
 \hline
+\multicolumn{6}{l}{\footnotesize{* p < 0.05, ** p < 0.01}}
 \end{tabular}
 \end{table}
 
-For Program 22 (Fare Reduction), the ITSA model revealed a significant immediate level change of 0.117 (p=0.003) with a slight positive but non-significant trend change of 0.008 (p=0.214). This indicates that the fare reduction resulted in an immediate improvement in passenger sentiment that was maintained but did not continue to significantly increase over time.
+The Smart Map Display program (Program 1) exhibited the most robust improvement pattern, with a significant positive trend change (p = 0.029) indicating that passenger sentiment continued to improve progressively after implementation. This suggests that the benefits of enhanced passenger information systems became more apparent to users over time as they adapted to the new technology. The model achieved good fit (R² = 0.323) and passed placebo tests, strengthening confidence in the causal interpretation.
 
-Program 4 (QR Code Payment) demonstrated both a significant immediate level change of 0.043 (p=0.038) and a significant positive trend change of 0.004 (p=0.047). This suggests that the introduction of QR code payment not only improved sentiment immediately but also contributed to continued improvement over time, possibly due to increasing adoption and familiarity with the technology.
+The QR Code Payment program (Program 4) demonstrated similar positive trends (p = 0.047), reflecting growing acceptance and appreciation of contactless payment options. The gradual improvement pattern aligns with typical technology adoption curves, where initial skepticism gives way to positive reception as users become familiar with new systems. The relatively lower R-squared value (0.237) suggests greater volatility in sentiment, possibly reflecting mixed reactions during the adoption period.
 
-For the remaining programs, neither the level changes nor trend changes reached statistical significance, aligning with the results from our basic statistical analysis.
+Interestingly, the Fare Reduction program (Program 22) showed the strongest statistical significance for trend change (p = 0.007) despite exhibiting a negative immediate level change. This pattern suggests that while the initial response was muted or even slightly negative, passengers increasingly appreciated the fare reduction benefits over time. This delayed positive response may reflect the time required for passengers to recognize and internalize the cost savings.
 
+The Temperature Consistency program (Program 0) presents a notable contrast, showing no significant trend change (p = 0.581) despite achieving the highest model fit (R² = 0.433). This result, combined with the significant negative mean difference observed in basic tests, suggests that the temperature control intervention failed to address passenger concerns effectively, possibly due to implementation challenges or insufficient system optimization.
 
-\subsubsection{Robustness Checks}
+Two programs—Mobile Nursing Rooms (Program 15) and Restroom Renovation (Program 5)—demonstrated neither significant level changes nor trend changes in the ITSA analysis. This finding aligns with the basic statistical tests and suggests that these amenity improvements, while potentially valued by specific user subgroups, did not generate widespread positive sentiment changes detectable in general social media discourse.
 
-To strengthen the validity of our findings, we conducted several robustness checks: 
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.99\textwidth]{figs/combined_its_analysis.png}
-\caption{its_analysis}
-\label{fig:sample_size_analysis}
-\end{figure}
-
-(1) Placebo Tests, where we artificially shifted intervention points to different time periods and re-estimated models, with Table \ref{tab:placebo_results} summarizing results for all programs—Programs 1, 4, 15, and 22 showed significant effects at true intervention points (p < 0.05) while placebo points exhibited substantially weaker or non-significant effects, strongly supporting causal interpretation, with Program 4 demonstrating this contrast most clearly (real intervention p=0.0467 vs. placebo p=0.9842); Program 5 showed neither true intervention nor placebo had significant effects, consistent with our earlier findings of minimal impact; and for Program 0, the placebo test failed with placebo intervention showing more significant effect (p=0.0326) than true intervention (p=0.0481), suggesting observed changes may be attributable to other factors or timing misalignment with implementation date; 
-
-    \begin{table}[h]
-    \centering
-    \caption{Placebo Test Results}
-    \label{tab:placebo_results}
-    \begin{tabular}{cccc}
-    \hline
-    Program ID & Real Intervention p-value & Placebo p-value & Test Passed \\
-    \hline
-    0 & 0.0481 & 0.0326 & No \\
-    1 & 0.0290 & 0.1056 & Yes \\
-    4 & 0.0467 & 0.9842 & Yes \\
-    5 & 0.9147 & 0.7119 & Yes \\
-    15 & 0.0000 & 0.4537 & Yes \\
-    22 & 0.0074 & 0.3008 & Yes \\
-    \hline
-    \end{tabular}
-    \end{table}
-
-(2) Sample Size Control, where we included number of social media posts as a covariate in alternative model specifications, with results remaining consistent, indicating findings weren't driven by data volume fluctuations; and (3) Alternative Time Aggregations, testing robustness using daily, weekly, and monthly aggregations, which showed consistent patterns and significance despite slight variations in effect magnitude.
-
-
-
-Figure \ref{fig:sample_size_analysis} illustrates the relationship between sample size and mean sentiment for each program, demonstrating that the observed effects were not simply artifacts of varying sample sizes.
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.9\textwidth]{figs/sample_size_analysis.png}
-\caption{Relationship between sample size and mean sentiment for each program}
-\label{fig:sample_size_analysis}
-\end{figure}
-
-\subsection{Discussion of Case Study Findings}
-
-The results from our case study of Shenzhen Metro service improvement programs reveal several key insights:
-
-\subsubsection{Variation in Program Effectiveness}
-
-Not all service improvement programs had equal impact on passenger sentiment. Programs addressing affordability (Program 22: Fare Reduction) and convenience (Program 4: QR Code Payment) demonstrated the strongest positive effects, with statistically significant improvements in sentiment following implementation. These findings align with previous research highlighting the importance of economic factors and technological convenience in shaping transit user satisfaction \citep{dell2018methodology, de2013composite}.
-
-In contrast, programs focused on physical comfort (Program 0: Temperature Consistency) and specialized amenities (Program 15: Mobile Nursing Rooms) showed slight negative or negligible effects on overall sentiment. This does not necessarily indicate program failure, but rather may reflect: 1) These programs address needs of specific user segments rather than the general ridership, 2) Benefits may be perceived only during particular situations (e.g., temperature inconsistency is only noticeable under certain conditions), and 3) Implementation may have caused temporary disruptions that affected sentiment in the short term.
-
-\subsubsection{Temporal Patterns in Program Impact}
-
-Our time series decomposition and ITSA revealed important temporal characteristics of program impacts: Fare Reduction (Program 22) produced strong immediate effects with significant level changes but minimal trend changes, suggesting quick passenger response to price incentives, while QR Code Payment (Program 4) showed both level and trend changes, indicating gradual adoption and increasing benefits over time; several programs exhibited interactions with seasonal patterns, with effects magnified during certain months, suggesting that service improvements may have varying relevance depending on ridership patterns, weather conditions, or other seasonal factors; for Programs 22 and 4, the positive effects appeared sustainable over the observation period, while other programs showed more variable long-term patterns.
-
-\subsubsection{Service Quality Dimensions and Passenger Response}
-
-The differential impact of programs addressing different service quality dimensions provides insights into passenger priorities in the Shenzhen Metro context: the strong positive response to fare reductions underscores the importance of affordability in shaping passenger perception, particularly in a context where public transit competes with alternative modes; the positive response to QR code payment suggests that technological innovations that streamline the transit experience resonate strongly with Shenzhen's tech-savvy population; the modest positive response to restroom renovations (Program 5) suggests that while basic amenities are appreciated, they may not dramatically shift overall sentiment unless they address critical pain points; the minimal impact of mobile nursing rooms highlights the challenges of measuring general sentiment effects for highly targeted improvements that benefit specific user segments.
-
-These findings suggest that transit agencies may achieve the greatest sentiment improvements by prioritizing affordability and technological convenience while using more targeted approaches to measure the impact of specialized amenities designed for specific user segments.
-
+The ITSA approach proved superior to basic statistical tests in several important ways. First, it controlled for pre-existing trends that could confound simple before-after comparisons. Second, it distinguished between immediate impacts (level changes) and sustained improvements (trend changes), providing nuanced insights into program effectiveness. Third, the inclusion of autoregressive terms addressed temporal autocorrelation inherent in social media time series data. Finally, placebo testing enhanced confidence in causal interpretation by demonstrating that significant effects were concentrated around actual implementation dates rather than randomly distributed across the time series.
 
 \section{Conclusion}\label{sec:conclusion}
 
-This research has developed an innovative framework for evaluating transit improvement programs using social media data, demonstrating its value through a case study of the Shenzhen Metro system. Our key contributions include: (1) an integrated text mining approach that bridges unstructured social media data with structured program evaluation, enabling transit agencies to extract relevant passenger feedback even when posts do not explicitly mention program names; (2) application of Interrupted Time Series Analysis to quantify program impacts while controlling for confounding factors like seasonal trends and temporal autocorrelation; and (3) empirical evidence from Shenzhen Metro showing differential impacts across service improvement types. Our case study revealed that programs addressing affordability (fare reduction) and technological convenience (QR code payment) elicited the strongest positive responses, with fare reduction producing immediate effects and QR code payment demonstrating gradually increasing impact over time. These findings suggest that economic value and technological convenience may be central to passenger satisfaction, while specialized amenities may require more targeted evaluation approaches.
+This study presents a novel methodological framework that integrates advanced natural language processing techniques with robust causal inference methods to evaluate transit improvement programs using social media data. Through the case study of Shenzhen Metro, we demonstrated how unstructured passenger feedback can be systematically analyzed to quantify program impacts while addressing the inherent challenges of observational social media data.
 
-Despite these contributions, our research has several limitations that should be acknowledged. The representativeness of social media users remains a concern, as elderly individuals, lower-income groups, or those with limited digital literacy may be underrepresented on these platforms. Social media expressions also tend toward emotional polarization, with users more likely to share extremely positive or negative experiences rather than routine ones. Additionally, while our causal inference approach accounts for multiple confounding factors, unobserved variables such as concurrent policy changes or external events may still influence results. The semantic matching process, while sophisticated, may not capture all relevant content, particularly when passenger feedback uses colloquial expressions or context-dependent references. These limitations suggest caution in generalizing findings and highlight the need for complementary evaluation approaches.
+Our findings reveal substantial heterogeneity in program effectiveness across different service quality dimensions. Technology-oriented improvements (Smart Map Display and QR Code Payment) demonstrated consistent positive impacts, with both immediate improvements and sustained long-term benefits. These results align with the growing importance of digital services in public transportation and suggest that passengers increasingly value technological enhancements that improve convenience and information accessibility. The Fare Reduction program exhibited a distinctive pattern of delayed positive response, highlighting the complex relationship between economic incentives and passenger perception formation.
 
-Future research should focus on integrating diverse data sources, including traditional surveys, smart card data, and operational metrics alongside social media content, to provide more comprehensive program evaluation. Methodologically, exploring advanced causal inference techniques such as synthetic control methods or machine learning-enhanced propensity score matching could improve the precision of impact estimation. Comparative studies across different urban contexts would help identify best practices and contextual factors influencing program success. Investigating differential responses among specific passenger segments would support more targeted service design and resource allocation. For transit agencies, our findings suggest prioritizing economic accessibility and technological convenience improvements, considering the temporal pattern of effects when planning implementation timelines, and developing specialized evaluation approaches for amenities targeting specific user segments. As social media platforms continue to evolve and data analytics techniques advance, the framework presented here offers a valuable complement to traditional evaluation methods, enabling more responsive, evidence-based transit planning and management.
+Conversely, the Temperature Consistency program showed significant negative impacts despite addressing a commonly cited passenger concern, suggesting implementation challenges or inadequate system optimization. The lack of detectable impacts for amenity improvements (Mobile Nursing Rooms and Restroom Renovation) indicates that while such facilities may serve important social functions, their influence on general passenger sentiment is limited and may require targeted analysis focusing on specific user subgroups.
+
+Methodologically, this study contributes to the transportation literature by demonstrating the superiority of causal inference approaches over simple before-after comparisons in social media analytics. The Interrupted Time Series Analysis proved particularly valuable in distinguishing between immediate and gradual program effects while controlling for temporal confounders such as seasonal patterns and pre-existing trends. The semantic matching approach using neural embeddings successfully addressed the fundamental challenge of connecting unstructured social media content to specific transit interventions, achieving 87.4% accuracy at our selected similarity threshold.
+
+The framework's practical implications for transit agencies are significant. First, it provides a cost-effective supplement to traditional passenger surveys, enabling continuous monitoring of passenger sentiment with minimal data collection costs. Second, the approach can identify program impacts that might be missed by conventional performance metrics, particularly those related to passenger experience and satisfaction. Third, the temporal granularity of social media data enables rapid detection of implementation problems or unexpected consequences, facilitating timely corrective actions.
+
+However, several limitations should be acknowledged. The social media user base may not be fully representative of the broader transit ridership, potentially introducing demographic and socioeconomic biases. Our analysis focused on general sentiment patterns rather than specific service quality dimensions, which may mask important heterogeneous effects across different aspects of service delivery. Additionally, the semantic matching approach, while achieving high accuracy, may still miss relevant content or include false positives, particularly for programs with ambiguous or evolving terminology.
+
+A critical limitation of our study is the absence of geographic location information in the collected social media data. This constraint prevented us from implementing experimental and control group designs based on spatial variation in program implementation, precluding the use of difference-in-differences (DiD) methodology. The inability to establish spatial control groups represents a significant methodological limitation, as DiD approaches could provide more robust causal identification by comparing treated and untreated areas while controlling for time-invariant unobserved characteristics. Future research should prioritize the collection of geo-tagged social media data or explore alternative quasi-experimental designs that can leverage spatial or demographic variation in program exposure.
+
+The framework's generalizability extends beyond our specific case study context. The methodological approach can be adapted to evaluate transit programs in other cities and cultural contexts, though careful attention must be paid to platform-specific characteristics, language processing requirements, and local social media usage patterns. The semantic matching component may require customization for different languages and transit terminology, while the ITSA approach remains broadly applicable across contexts.
+
+Future research directions include extending the framework to incorporate multiple data sources simultaneously, such as combining social media sentiment with ridership data, operational metrics, and traditional survey responses. Advanced machine learning techniques could enhance the semantic matching process, potentially using transformer-based models fine-tuned on transportation-specific content. The development of real-time monitoring systems based on this framework could enable proactive program management and rapid response to emerging issues.
+
+Additionally, future studies should explore the integration of spatial analysis techniques when geographic information is available, enabling more sophisticated quasi-experimental designs and spatial heterogeneity analysis. The development of standardized evaluation protocols based on this framework could facilitate cross-city comparisons and meta-analyses of transit improvement program effectiveness.
+
+In conclusion, this study demonstrates the substantial potential of social media data for evidence-based transit program evaluation when combined with appropriate methodological frameworks. While limitations remain, particularly regarding representativeness and spatial identification, the approach offers valuable insights for transit agencies seeking to understand and improve passenger experience in an increasingly connected and digitally-engaged urban environment. The integration of social media analytics with traditional evaluation methods represents a promising direction for enhancing the effectiveness and responsiveness of public transportation systems.
+
+
 
 
 % \section*{Acknowledgement}

@@ -6,6 +6,10 @@ import seaborn as sns
 from scipy import stats
 import glob
 from statsmodels.stats.contingency_tables import mcnemar
+from statsmodels.tsa.stattools import adfuller, kpss
+from statsmodels.tsa.seasonal import seasonal_decompose
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+from sklearn.linear_model import LinearRegression
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -371,6 +375,272 @@ def create_overall_visualizations(summary_df):
     plt.tight_layout()
     plt.close()
 
+def perform_time_series_analysis(program_ids=None, processed_dir='processed_data'):
+    """Perform time series analysis for service programs
+    
+    Args:
+        program_ids (list, optional): List of program IDs to analyze. If None, analyze all programs.
+        processed_dir (str, optional): Directory path for processed data. Default is 'processed_data'.
+        
+    Returns:
+        DataFrame: TSA results summary
+    """
+    print("Performing time series analysis...")
+    
+    # Create results directory if it doesn't exist
+    if not os.path.exists('results'):
+        os.makedirs('results')
+    
+    # Get all daily data files
+    if program_ids is not None:
+        daily_files = [f'{processed_dir}/program_{pid}_daily.csv' for pid in program_ids 
+                        if os.path.exists(f'{processed_dir}/program_{pid}_daily.csv')]
+        if not daily_files:
+            print("Warning: No daily data files found for the specified program IDs")
+    else:
+        daily_files = glob.glob(f'{processed_dir}/program_*_daily.csv')
+    
+    # TSA results summary
+    tsa_results = pd.DataFrame(columns=[
+        'program_id', 'program_name', 'pre_adf_stat', 'pre_adf_pvalue', 'pre_stationary',
+        'post_adf_stat', 'post_adf_pvalue', 'post_stationary',
+        'pre_trend_slope', 'pre_trend_pvalue', 'post_trend_slope', 'post_trend_pvalue',
+        'pre_mean', 'post_mean', 'trend_change', 'volatility_change'
+    ])
+    
+    # Collect all time series data for visualization
+    all_ts_data = []
+    
+    if not daily_files:
+        print("No daily data files found for TSA")
+        return tsa_results
+    
+    for file_path in daily_files:
+        # Extract program ID from filename
+        program_id = int(file_path.split('_')[-2])
+        
+        # Load program data
+        df = pd.read_csv(file_path)
+        
+        if len(df) == 0:
+            print(f"Warning: No data found for program {program_id}")
+            continue
+        
+        # Convert date column to datetime
+        df['date'] = pd.to_datetime(df['date'])
+        df = df.sort_values('date')
+        
+        # Define standard program name mapping
+        program_names_map = {
+            0: "Temperature Consistency",
+            1: "Smart Map Display", 
+            4: "QR Code Payment",
+            5: "Restroom Renovation",
+            15: "Mobile Nursing Rooms",
+            22: "Fare Reduction"
+        }
+        program_name = program_names_map.get(program_id, f"Program {program_id}")
+        
+        # Separate pre and post intervention data
+        pre_data = df[df['post_intervention'] == 0]['mean_sentiment'].values
+        post_data = df[df['post_intervention'] == 1]['mean_sentiment'].values
+        
+        # Check if we have enough data for TSA
+        if len(pre_data) < 10 or len(post_data) < 10:
+            print(f"Warning: Insufficient data for TSA for program {program_id}")
+            continue
+        
+        # ADF test for stationarity
+        try:
+            pre_adf_stat, pre_adf_pvalue = adfuller(pre_data)[:2]
+            pre_stationary = pre_adf_pvalue < 0.05
+        except:
+            pre_adf_stat, pre_adf_pvalue, pre_stationary = np.nan, np.nan, False
+            
+        try:
+            post_adf_stat, post_adf_pvalue = adfuller(post_data)[:2]
+            post_stationary = post_adf_pvalue < 0.05
+        except:
+            post_adf_stat, post_adf_pvalue, post_stationary = np.nan, np.nan, False
+        
+        # Trend analysis using linear regression
+        def analyze_trend(data):
+            if len(data) < 3:
+                return np.nan, np.nan
+            X = np.arange(len(data)).reshape(-1, 1)
+            y = data
+            model = LinearRegression().fit(X, y)
+            slope = model.coef_[0]
+            
+            # Simple t-test for slope significance
+            y_pred = model.predict(X)
+            residuals = y - y_pred
+            se_slope = np.sqrt(np.sum(residuals**2) / (len(data) - 2)) / np.sqrt(np.sum((X.flatten() - X.mean())**2))
+            t_stat = slope / se_slope if se_slope > 0 else 0
+            p_value = 2 * (1 - stats.t.cdf(abs(t_stat), len(data) - 2))
+            
+            return slope, p_value
+        
+        pre_trend_slope, pre_trend_pvalue = analyze_trend(pre_data)
+        post_trend_slope, post_trend_pvalue = analyze_trend(post_data)
+        
+        # Calculate volatility change
+        pre_volatility = np.std(pre_data)
+        post_volatility = np.std(post_data)
+        volatility_change = post_volatility - pre_volatility
+        
+        # Calculate trend change
+        trend_change = post_trend_slope - pre_trend_slope if not (np.isnan(post_trend_slope) or np.isnan(pre_trend_slope)) else np.nan
+        
+        # Add results to summary
+        tsa_results = pd.concat([tsa_results, pd.DataFrame({
+            'program_id': [program_id],
+            'program_name': [program_name],
+            'pre_adf_stat': [pre_adf_stat],
+            'pre_adf_pvalue': [pre_adf_pvalue],
+            'pre_stationary': [pre_stationary],
+            'post_adf_stat': [post_adf_stat],
+            'post_adf_pvalue': [post_adf_pvalue],
+            'post_stationary': [post_stationary],
+            'pre_trend_slope': [pre_trend_slope],
+            'pre_trend_pvalue': [pre_trend_pvalue],
+            'post_trend_slope': [post_trend_slope],
+            'post_trend_pvalue': [post_trend_pvalue],
+            'pre_mean': [np.mean(pre_data)],
+            'post_mean': [np.mean(post_data)],
+            'trend_change': [trend_change],
+            'volatility_change': [volatility_change]
+        })], ignore_index=True)
+        
+        # Collect data for visualization
+        all_ts_data.append({
+            'program_id': program_id,
+            'program_name': program_name,
+            'dates': df['date'].values,
+            'sentiment': df['mean_sentiment'].values,
+            'intervention': df['post_intervention'].values,
+            'intervention_date': df['intervention_date'].iloc[0] if 'intervention_date' in df.columns else None
+        })
+    
+    # Save TSA results
+    tsa_results.to_csv('results/tsa_summary.csv', index=False)
+    
+    # Create TSA visualizations
+    create_tsa_visualizations(all_ts_data)
+    
+    # Create TSA summary table
+    create_tsa_summary_table(tsa_results)
+    
+    print("Time series analysis completed")
+    return tsa_results
+
+def create_tsa_visualizations(ts_data_list):
+    """Create time series analysis visualizations"""
+    if not ts_data_list:
+        print("Warning: No data for TSA visualizations")
+        return
+        
+    # Ensure figures directory exists
+    if not os.path.exists('figures'):
+        os.makedirs('figures')
+    
+    # Create a comprehensive time series plot
+    n_programs = len(ts_data_list)
+    n_cols = 2
+    n_rows = (n_programs + n_cols - 1) // n_cols
+    
+    plt.figure(figsize=(20, 4 * n_rows))
+    
+    for i, program in enumerate(ts_data_list):
+        plt.subplot(n_rows, n_cols, i+1)
+        
+        # Plot time series
+        dates = pd.to_datetime(program['dates'])
+        sentiment = program['sentiment']
+        intervention = program['intervention']
+        
+        # Pre and post intervention periods
+        pre_mask = intervention == 0
+        post_mask = intervention == 1
+        
+        plt.scatter(dates[pre_mask], sentiment[pre_mask], c='blue', alpha=0.7, s=20, label='Pre-intervention')
+        plt.scatter(dates[post_mask], sentiment[post_mask], c='red', alpha=0.7, s=20, label='Post-intervention')
+        
+        # Add intervention line
+        if program['intervention_date']:
+            intervention_date = pd.to_datetime(program['intervention_date'])
+            plt.axvline(x=intervention_date, color='green', linestyle='--', alpha=0.8, label='Intervention')
+        
+        plt.title(f"{program['program_name']}")
+        plt.xlabel('Date')
+        plt.ylabel('Sentiment Score')
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        plt.xticks(rotation=45)
+    
+    plt.tight_layout()
+    # Make SVG text editable
+    plt.rcParams['svg.fonttype'] = 'none'
+    plt.rcParams['font.family'] = 'sans-serif'
+    plt.savefig('figures/tsa_time_series.svg')
+    plt.close()
+
+def create_tsa_summary_table(tsa_results):
+    """Create TSA summary table in text format"""
+    if len(tsa_results) == 0:
+        print("Warning: No TSA results to summarize")
+        return
+    
+    with open('results/tsa_summary_table.txt', 'w') as f:
+        f.write("TIME SERIES ANALYSIS SUMMARY\n")
+        f.write("=" * 80 + "\n\n")
+        
+        f.write("STATIONARITY TESTS (ADF Test)\n")
+        f.write("-" * 50 + "\n")
+        f.write(f"{'Program':<20} {'Pre-ADF':<10} {'Pre-p':<8} {'Pre-Stat':<10} {'Post-ADF':<10} {'Post-p':<8} {'Post-Stat':<10}\n")
+        f.write("-" * 80 + "\n")
+        
+        for _, row in tsa_results.iterrows():
+            f.write(f"{row['program_name']:<20} "
+                   f"{row['pre_adf_stat']:<10.3f} "
+                   f"{row['pre_adf_pvalue']:<8.3f} "
+                   f"{str(row['pre_stationary']):<10} "
+                   f"{row['post_adf_stat']:<10.3f} "
+                   f"{row['post_adf_pvalue']:<8.3f} "
+                   f"{str(row['post_stationary']):<10}\n")
+        
+        f.write("\nTREND ANALYSIS\n")
+        f.write("-" * 50 + "\n")
+        f.write(f"{'Program':<20} {'Pre-Slope':<12} {'Pre-p':<8} {'Post-Slope':<12} {'Post-p':<8} {'Change':<10}\n")
+        f.write("-" * 80 + "\n")
+        
+        for _, row in tsa_results.iterrows():
+            trend_change = row['trend_change'] if not pd.isna(row['trend_change']) else 0
+            f.write(f"{row['program_name']:<20} "
+                   f"{row['pre_trend_slope']:<12.6f} "
+                   f"{row['pre_trend_pvalue']:<8.3f} "
+                   f"{row['post_trend_slope']:<12.6f} "
+                   f"{row['post_trend_pvalue']:<8.3f} "
+                   f"{trend_change:<10.6f}\n")
+        
+        f.write("\nSUMMARY STATISTICS\n")
+        f.write("-" * 50 + "\n")
+        f.write(f"{'Program':<20} {'Pre-Mean':<10} {'Post-Mean':<10} {'Vol-Change':<12}\n")
+        f.write("-" * 60 + "\n")
+        
+        for _, row in tsa_results.iterrows():
+            f.write(f"{row['program_name']:<20} "
+                   f"{row['pre_mean']:<10.4f} "
+                   f"{row['post_mean']:<10.4f} "
+                   f"{row['volatility_change']:<12.6f}\n")
+        
+        f.write("\nNOTES:\n")
+        f.write("- ADF Test: Augmented Dickey-Fuller test for stationarity (p<0.05 = stationary)\n")
+        f.write("- Trend Slope: Linear trend coefficient (positive = increasing trend)\n")
+        f.write("- Vol-Change: Change in volatility (standard deviation) post-intervention\n")
+        f.write("- Trend Change: Difference in trend slopes (post - pre intervention)\n")
+
 if __name__ == "__main__":
     summary_results = analyze_program_stats()
-    print(f"分析完成。结果已保存至'results'和'figures'目录。")
+    tsa_results = perform_time_series_analysis()
+    print(f"分析完成。基本统计分析和时间序列分析结果已保存至'results'和'figures'目录。")
