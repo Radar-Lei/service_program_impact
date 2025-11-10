@@ -143,7 +143,7 @@ However, the existing literature predominantly focuses on using social media dat
 
 \section{Methodology}\label{sec:Methodology}
 
-This section presents our methods for evaluating transit improvement programs using social media data. The framework integrates advanced natural language processing (NLP) techniques with robust causal inference methods to systematically analyze how transit improvement programs influence passenger sentiment. As illustrated in \hyperref[fig:methodology_framework]{Fig.~\ref{fig:methodology_framework}}, our approach consists of three main components: (1) data preprocessing and semantic matching, (2) sentiment analysis and aggregation, and (3) impact evaluation using ITSA.
+This section presents our methods for evaluating transit improvement programs using social media data. The framework integrates advanced natural language processing (NLP) techniques with robust causal inference methods to systematically analyze how transit improvement programs influence passenger sentiment. As illustrated in \hyperref[fig:methodology_framework]{Fig.~\ref{fig:methodology_framework}}, our approach consists of three main components that pass intermediate outputs forward: (1) data preprocessing that produces topic-annotated posts for semantic matching, (2) sentiment analysis and temporal aggregation on the matched post sets, and (3) impact evaluation using ITSA fed by the aggregated sentiment trajectories.
 
 \begin{figure}[htbp]
 \centering
@@ -156,7 +156,7 @@ This section presents our methods for evaluating transit improvement programs us
 
 \subsubsection{Latent Dirichlet Allocation for Topic Discovery}
 
-The first step in our framework involves processing unstructured social media posts to identify latent themes relevant to transit improvement programs. We employ Latent Dirichlet Allocation (LDA) \citep{blei2003latent}, a probabilistic topic modeling technique that discovers hidden thematic structures within text data. LDA models each document as a mixture of topics, where each topic is characterized by a distribution over words.
+The first step in our framework involves processing unstructured social media posts to identify latent themes relevant to transit improvement programs. We employ Latent Dirichlet Allocation (LDA) \citep{blei2003latent}, a probabilistic topic modeling technique that discovers hidden thematic structures within text data. LDA models each document as a mixture of topics, where each topic is characterized by a distribution over words. The resulting document-topic posteriors provide the topic cues that subsequent semantic matching uses to restrict each program to plausible candidate posts.
 
 For preprocessing, we first remove URLs, special characters, and numbers from the text, then segment Chinese text using Jieba,\footnote{Jieba: \url{https://github.com/fxsjy/jieba}} a widely-used open-source Chinese text segmentation library. We eliminate stopwords and short words (typically single characters), as they convey minimal semantic meaning. To improve the segmentation quality for transit-specific content, we augment the Jieba dictionary with domain-relevant terms such as metro station names.
 
@@ -172,7 +172,7 @@ To enhance model robustness, we optimize the LDA hyperparameters through multipl
 
 \subsubsection{TF-IDF Feature Extraction}
 
-After topic modeling, we employ Term Frequency-Inverse Document Frequency (TF-IDF) transformation to identify the most distinctive terms for each topic. The TF-IDF score for a term $t$ in document $d$ within corpus $D$ is computed as:
+Before estimating topics, we construct a Term Frequency-Inverse Document Frequency (TF-IDF) weighted document-term matrix that highlights discriminative transit-related vocabulary and dampens ubiquitous function words. The TF-IDF score for a term $t$ in document $d$ within corpus $D$ is computed as:
 
 \begin{align}
 \text{TF-IDF}(t, d, D) = \text{TF}(t, d) \times \text{IDF}(t, D)
@@ -184,25 +184,25 @@ where $\text{TF}(t, d)$ is the frequency of term $t$ in document $d$, and $\text
 \text{IDF}(t, D) = \log\frac{|D|}{|\{d \in D: t \in d\}|}
 \end{align}
 
-This transformation assigns higher weights to terms that are frequent in a specific document but rare across the corpus, which helps identify the most characteristic words for each topic. We apply TF-IDF transformation to the word-document matrix before fitting the LDA model, which helps improve topic coherence and interpretability.
+This transformation assigns higher weights to terms that are frequent in a specific document but rare across the corpus, which helps identify the most characteristic words for each topic. The TF-IDF weighted matrix is the input to the LDA estimation, and the resulting topic-specific TF-IDF rankings are stored as interpretable topic descriptors that guide the semantic matching thresholds described next.
 
 \subsubsection{Neural Embedding for Semantic Matching}
 
 To connect passenger feedback with specific transit improvement programs, we implement a semantic matching approach using neural embeddings. Specifically, we utilize the multilingual MiniLM-L12-v2 model from the sentence-transformers framework \citep{reimers2019sentence}, which maps text into a dense 384-dimensional vector space where semantically similar texts have high cosine similarity.
 
-For each transit improvement program, we create a document that describes its objectives and features, then compute the embedding vector for this description. Similarly, we compute embedding vectors for each processed social media post. The semantic similarity between a transit improvement program $p$ and a post $s$ is calculated as:
+For each transit improvement program, we have a description (from the official program document) that depicts its objectives and features, then compute the embedding vector for this description. Similarly, we compute embedding vectors for each processed social media post whose dominant LDA topic belongs to the topic sets curated for that program using the TF-IDF keywords. The semantic similarity between a transit improvement program $p$ and a post $s$ is calculated as:
 
 \begin{align}
 \text{sim}(p, s) = \frac{\mathbf{v}_p \cdot \mathbf{v}_s}{||\mathbf{v}_p|| \cdot ||\mathbf{v}_s||}
 \end{align}
 
-where $\mathbf{v}_p$ and $\mathbf{v}_s$ are the embedding vectors for the transit improvement program description and social media post, respectively. We establish a similarity threshold based on empirical testing, which balances precision and recall in matching relevant posts to transit improvement programs. Posts exceeding this threshold are considered relevant to the corresponding transit improvement program and included in the subsequent analysis.
+where $\mathbf{v}_p$ and $\mathbf{v}_s$ are the embedding vectors for the transit improvement program description and social media post, respectively. We establish a similarity threshold based on empirical testing, which balances precision and recall in matching relevant posts to transit improvement programs. Only posts that (i) satisfy the topic filter and (ii) exceed the cosine similarity threshold are retained; the resulting post sets $S_p$ constitute the exclusive input to the sentiment analysis module.
 
 \subsection{Sentiment Analysis and Aggregation}
 
 \subsubsection{Sentiment Analysis Approach}
 
-Given the specificity of transit-related terminology and the Chinese language context, we employ a domain-adapted sentiment analysis approach that combines a pre-trained sentiment model with domain-specific adjustments. For each post $s$, we compute a sentiment score $f(s) \in [-1, 1]$, where $-1$ represents extremely negative sentiment, $0$ represents neutral sentiment, and $1$ represents extremely positive sentiment. The sentiment score is computed as:
+Given the specificity of transit-related terminology and the Chinese language context, we employ a domain-adapted sentiment analysis approach that combines a pre-trained sentiment model with domain-specific adjustments. The sentiment module operates only on the matched post sets $S_p$, ensuring that every computed score flows directly into a downstream program-level metric. For each post $s \in S_p$, we compute a sentiment score $f(s) \in [-1, 1]$, where $-1$ represents extremely negative sentiment, $0$ represents neutral sentiment, and $1$ represents extremely positive sentiment. The sentiment score is computed as:
 
 \begin{align}
 f(s) = \text{clip}\left( \alpha \cdot f_{\text{base}}(s) + \beta \cdot f_{\text{lex}}(s) \right)
@@ -217,13 +217,17 @@ f_{\text{lex}}(s) = \frac{1}{|s|} \sum_{w_i \in s} \gamma_i \cdot \text{sign}_i 
 
 where $d(w_i)$ is the sentiment polarity of word $w_i$ in our domain lexicon ($d(w_i) \in [-1, 1]$), $\text{sign}_i = (-1)^{n_i}$ handles negation patterns with $n_i$ counting negation words preceding $w_i$, $\gamma_i$ is the intensification factor (1.5 for strong intensifiers, 1.2 for medium intensifiers, and 1.0 otherwise), and $|s|$ is the post length in tokens.
 
-This formulation integrates state-of-the-art deep learning with domain-specific linguistic rules to accurately capture passenger sentiment in the transit context.
+This formulation integrates state-of-the-art deep learning with domain-specific linguistic rules to accurately capture passenger sentiment in the transit context. We then aggregate sentiment within fixed weekly windows for each program:
+\begin{align}
+Y_{p,t} = \frac{1}{N_{p,t}} \sum_{s \in S_{p,t}} f(s),
+\end{align}
+where $S_{p,t} \subseteq S_p$ is the set of posts associated with program $p$ that fall in week $t$, and $N_{p,t} = |S_{p,t}|$. The pair $(Y_{p,t}, N_{p,t})$ becomes the input to the ITSA stage, with $N_{p,t}$ later used as a covariate to control for varying discussion volumes.
 
 \subsection{Impact Evaluation Using Interrupted Time Series Analysis}
 
 \subsubsection{Model Specification}
 
-To quantify the impact of transit improvement programs on passenger sentiment, we employ ITSA, a quasi-experimental design that evaluates interventions by examining changes in time series data patterns before and after implementation \citep{bernal2017interrupted}. ITSA is well-suited for our context as it can distinguish between immediate and gradual effects while controlling for pre-existing trends.
+To quantify the impact of transit improvement programs on passenger sentiment, we employ ITSA, a quasi-experimental design that evaluates interventions by examining changes in time series data patterns before and after implementation \citep{bernal2017interrupted}. ITSA is well-suited for our context as it can distinguish between immediate and gradual effects while controlling for pre-existing trends. The dependent variable is the aggregated mean sentiment $Y_{p,t}$ described above, ensuring that the causal analysis consumes exactly the outputs generated by the semantic matching and sentiment modules.
 
 Our core ITSA model specification is:
 
@@ -231,7 +235,7 @@ Our core ITSA model specification is:
 Y_t = \beta_0 + \beta_1 T_t + \beta_2 X_t + \beta_3 X_t T_t + \epsilon_t
 \end{align}
 
-where $Y_t$ represents the mean sentiment score at time $t$, $T_t$ indicates the time elapsed since the start of the study, $X_t$ is a dummy variable that distinguishes between pre-intervention ($X_t = 0$) and post-intervention periods ($X_t = 1$), $X_t T_t$ serves as an interaction term measuring time since the intervention occurred, and $\epsilon_t$ denotes the error term.
+where $Y_t$ represents $Y_{p,t}$ for a given program, $T_t$ indicates the time elapsed since the start of the study, $X_t$ is a dummy variable that distinguishes between pre-intervention ($X_t = 0$) and post-intervention periods ($X_t = 1$), $X_t T_t$ serves as an interaction term measuring time since the intervention occurred, and $\epsilon_t$ denotes the error term.
 
 In this model, $\beta_0$ represents the baseline level, $\beta_1$ captures the pre-intervention trend, $\beta_2$ indicates the immediate change in level following intervention, and $\beta_3$ represents the change in trend after intervention.
 
