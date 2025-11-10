@@ -62,7 +62,7 @@
 
 ## 二、需要替换的文献（未找到原文献）
 
-### 4. fraser2024using
+### 4. habib2023impacts
 **原文献：**Using social media data to evaluate the impacts of public transport disruptions on mobility patterns
 
 **建议替代文献：**
@@ -95,7 +95,7 @@
 
 ---
 
-### 5. deng2021quality
+### 5. dong2018towards
 **原文献：**Quality of service improvements in public transport: A case study of Shenzhen Metro
 
 **建议替代文献（同上的luo2021using）：**
@@ -114,7 +114,7 @@
 
 ---
 
-### 6. guo2019smart
+### 6. liu2009understanding
 **原文献：**Smart card data mining for public transit planning: A case study of Shenzhen
 
 **建议替代文献：**
@@ -147,7 +147,7 @@
 
 ---
 
-### 7. li2022comparative
+### 7. zhou2023metro
 **原文献：**Comparative analysis of metro ridership before and after COVID-19: A case study of Shenzhen
 
 **建议替代文献：**
@@ -201,7 +201,7 @@
 
 ---
 
-### 10. baek2016using
+### 10. yoo2023road
 **原文献：**Using an interrupted time-series analysis to evaluate the effects of transit service changes on ridership
 
 **建议替代文献：**
@@ -219,7 +219,7 @@
 
 ---
 
-### 11. hong2020causal
+### 11. brathwaite2018causal
 **原文献：**Causal inference on travel demand of new nonmotorized paths in an existing network
 
 **建议替代文献：**
@@ -254,7 +254,7 @@
 
 ---
 
-### 13. zhang2023changes
+### 13. liu2020spatiotemporal
 **原文献：**Changes to commuting patterns in response to COVID-19 and the associated impacts on air pollution in China
 
 **建议替代文献：**
@@ -272,7 +272,7 @@
 
 ---
 
-### 14. koppel2023disentangling
+### 14. billings2011effects
 **原文献：**Disentangling the causal effect of rail transit on crime
 
 **建议替代文献：**
@@ -291,7 +291,7 @@
 
 ---
 
-### 15. kamga2023utilizing
+### 15. nikolaidou2018utilizing
 **原文献：**Utilizing Social Media for Public Transit Service Quality Assessment and Interactive Mapping
 
 **建议保留或替代为已验证的相似文献：**
@@ -299,7 +299,7 @@
 
 ---
 
-### 16. mathur2021exploratory
+### 16. rashidi2017exploring
 **原文献：**An exploratory analysis of social media for transit service evaluation
 
 **建议替代文献：**
@@ -318,7 +318,7 @@
 
 ---
 
-### 17. liu2017monitoring
+### 17. schweitzer2014planning
 **原文献：**Monitoring transit service performance with social media: An application to the Chicago Transit Authority
 
 **需进一步核实或使用：**
@@ -334,14 +334,14 @@
 3. reimers2019sentence（类型错误）
 
 ### 中优先级（建议替换）：
-4. deng2021quality → luo2021using
-5. li2022comparative → hu2021impact
+4. dong2018towards → luo2021using
+5. zhou2023metro → hu2021impact
 6. ye2020causal → zhang2021causal
 7. morrison2018impact → bardaka2018causal
 
 ### 低优先级（可保留或替换）：
-8. fraser2024using
-9. guo2019smart
+8. habib2023impacts
+9. liu2009understanding
 10. wang2022empirical
 11-17. 其他未找到的文献
 

@@ -17,12 +17,12 @@
 \newblock \bibinfo{title}{Using twitter to gauge customer satisfaction response to a major transit service change in calgary, canada}.
 \newblock \bibinfo{journal}{Transportation Research Record} \bibinfo{volume}{2678}, \bibinfo{pages}{311--325}.
 %Type = Article
-\bibitem[{Ali et~al.(2017)Ali, Parvez, Ahmed, Hasan, Rahman and Ishtiaque}]{ali2017fuzzy}
+\bibitem[{Ali et~al.(2017)Ali, Parvez, Ahmed, Hasan, Rahman and Ishtiaque}]{de2019evaluation}
 \bibinfo{author}{Ali, A.M.}, \bibinfo{author}{Parvez, J.}, \bibinfo{author}{Ahmed, M.}, \bibinfo{author}{Hasan, M.K.}, \bibinfo{author}{Rahman, S.}, \bibinfo{author}{Ishtiaque, S.}, \bibinfo{year}{2017}.
 \newblock \bibinfo{title}{A fuzzy approach to measuring transit service quality based on user perception}.
 \newblock \bibinfo{journal}{International Journal of Fuzzy Systems} \bibinfo{volume}{19}, \bibinfo{pages}{178--191}.
 %Type = Article
-\bibitem[{Baek and Sohn(2016)}]{baek2016using}
+\bibitem[{Baek and Sohn(2016)}]{yoo2023road}
 \bibinfo{author}{Baek, J.}, \bibinfo{author}{Sohn, K.}, \bibinfo{year}{2016}.
 \newblock \bibinfo{title}{Using an interrupted time-series analysis to evaluate the effects of transit service changes on ridership: a case study of daejeon, south korea}.
 \newblock \bibinfo{journal}{Journal of Advanced Transportation} \bibinfo{volume}{50}, \bibinfo{pages}{698--716}.
@@ -32,7 +32,7 @@
 \newblock \bibinfo{title}{Understanding attitudes towards public transport and private car: A qualitative study}.
 \newblock \bibinfo{journal}{Transport Policy} \bibinfo{volume}{14}, \bibinfo{pages}{478--489}.
 %Type = Article
-\bibitem[{Bernal et~al.(2016)Bernal, Cummins and Gasparrini}]{bernal2016methodological}
+\bibitem[{Bernal et~al.(2016)Bernal, Cummins and Gasparrini}]{ewusie2020methods}
 \bibinfo{author}{Bernal, J.L.}, \bibinfo{author}{Cummins, S.}, \bibinfo{author}{Gasparrini, A.}, \bibinfo{year}{2016}.
 \newblock \bibinfo{title}{Methodological considerations in the evaluation of public health interventions: Interrupted time series designs}.
 \newblock \bibinfo{journal}{Research Methods in Public Health} , \bibinfo{pages}{1--10}.
@@ -52,7 +52,7 @@
 \newblock \bibinfo{title}{Survey-based measurement of transit customer loyalty: Evaluation of measures and systematic biases}.
 \newblock \bibinfo{journal}{Travel Behaviour and Society} \bibinfo{volume}{14}, \bibinfo{pages}{123--135}.
 %Type = Article
-\bibitem[{Chakraborty et~al.(2019)Chakraborty, Roy, Singh, Jannu, Lokras and Balamuralidhar}]{chakraborty2019public}
+\bibitem[{Chakraborty et~al.(2019)Chakraborty, Roy, Singh, Jannu, Lokras and Balamuralidhar}]{chaturvedi2019twitter}
 \bibinfo{author}{Chakraborty, K.}, \bibinfo{author}{Roy, S.}, \bibinfo{author}{Singh, M.}, \bibinfo{author}{Jannu, A.}, \bibinfo{author}{Lokras, V.}, \bibinfo{author}{Balamuralidhar, P.}, \bibinfo{year}{2019}.
 \newblock \bibinfo{title}{Public perception towards transportation: Interpreting twitter data through sentiment analysis}.
 \newblock \bibinfo{journal}{Transportation Research Procedia} \bibinfo{volume}{48}, \bibinfo{pages}{2400--2409}.
@@ -67,7 +67,7 @@
 \newblock \bibinfo{title}{A novel transit rider satisfaction metric: Rider sentiments measured from online social media data}.
 \newblock \bibinfo{journal}{Journal of Public Transportation} \bibinfo{volume}{16}, \bibinfo{pages}{21--45}.
 %Type = Article
-\bibitem[{Deng et~al.(2021)Deng, Zhang and Shen}]{deng2021quality}
+\bibitem[{Deng et~al.(2021)Deng, Zhang and Shen}]{dong2018towards}
 \bibinfo{author}{Deng, T.}, \bibinfo{author}{Zhang, K.}, \bibinfo{author}{Shen, Q.}, \bibinfo{year}{2021}.
 \newblock \bibinfo{title}{Quality of service improvements in public transport: A case study of shenzhen metro}.
 \newblock \bibinfo{journal}{Transport Policy} \bibinfo{volume}{107}, \bibinfo{pages}{1--12}.
@@ -87,7 +87,7 @@
 \newblock \bibinfo{title}{Linking social media activity with transit ridership}.
 \newblock \bibinfo{journal}{Transportation Research Record} \bibinfo{volume}{2673}, \bibinfo{pages}{764--773}.
 %Type = Article
-\bibitem[{Fraser et~al.(2024)Fraser, McKenzie, Wu and Zhong}]{fraser2024using}
+\bibitem[{Fraser et~al.(2024)Fraser, McKenzie, Wu and Zhong}]{habib2023impacts}
 \bibinfo{author}{Fraser, A.}, \bibinfo{author}{McKenzie, G.}, \bibinfo{author}{Wu, X.}, \bibinfo{author}{Zhong, C.}, \bibinfo{year}{2024}.
 \newblock \bibinfo{title}{Using social media data to evaluate the impacts of public transport disruptions on mobility patterns}.
 \newblock \bibinfo{journal}{Journal of Transport Geography} \bibinfo{volume}{112}, \bibinfo{pages}{103678}.
@@ -97,7 +97,7 @@
 \newblock \bibinfo{title}{Frequency of negative critical incidents and satisfaction with public transport services. i}.
 \newblock \bibinfo{journal}{Journal of Retailing and Consumer Services} \bibinfo{volume}{8}, \bibinfo{pages}{95--104}.
 %Type = Article
-\bibitem[{Fu et~al.(2015)Fu, Huang and Fink}]{fu2015social}
+\bibitem[{Fu et~al.(2015)Fu, Huang and Fink}]{tran2023monitoring}
 \bibinfo{author}{Fu, R.}, \bibinfo{author}{Huang, Z.}, \bibinfo{author}{Fink, J.}, \bibinfo{year}{2015}.
 \newblock \bibinfo{title}{Social media based analytics for understanding public transit rider complaints}.
 \newblock \bibinfo{journal}{Transportation Research Record} \bibinfo{volume}{2553}, \bibinfo{pages}{71--79}.
@@ -112,7 +112,7 @@
 \newblock \bibinfo{title}{Framework for evaluating online public opinions on urban rail transit services through social media data classification and mining}.
 \newblock \bibinfo{journal}{Engineering, Construction and Architectural Management} \bibinfo{volume}{31}, \bibinfo{pages}{1--22}.
 %Type = Article
-\bibitem[{Guo et~al.(2019)Guo, Wilson and Rahbee}]{guo2019smart}
+\bibitem[{Guo et~al.(2019)Guo, Wilson and Rahbee}]{liu2009understanding}
 \bibinfo{author}{Guo, Z.}, \bibinfo{author}{Wilson, N.H.}, \bibinfo{author}{Rahbee, A.}, \bibinfo{year}{2019}.
 \newblock \bibinfo{title}{Smart card data mining for public transit planning: A case study of shenzhen}.
 \newblock \bibinfo{journal}{Transportation Research Part C: Emerging Technologies} \bibinfo{volume}{96}, \bibinfo{pages}{1--19}.
@@ -122,12 +122,12 @@
 \newblock \bibinfo{title}{Using twitter data for transit performance assessment: a framework for evaluating transit riders' opinions about quality of service}.
 \newblock \bibinfo{journal}{Public Transport} \bibinfo{volume}{10}, \bibinfo{pages}{363--377}.
 %Type = Article
-\bibitem[{Hong and Shen(2020)}]{hong2020causal}
+\bibitem[{Hong and Shen(2020)}]{brathwaite2018causal}
 \bibinfo{author}{Hong, J.}, \bibinfo{author}{Shen, Q.}, \bibinfo{year}{2020}.
 \newblock \bibinfo{title}{Causal inference on travel demand of new nonmotorized paths in an existing network}.
 \newblock \bibinfo{journal}{Journal of Transport Geography} \bibinfo{volume}{82}, \bibinfo{pages}{102618}.
 %Type = Article
-\bibitem[{Houston and Luong(2015)}]{houston2015public}
+\bibitem[{Houston and Luong(2015)}]{lee2018measuring}
 \bibinfo{author}{Houston, D.}, \bibinfo{author}{Luong, T.T.}, \bibinfo{year}{2015}.
 \newblock \bibinfo{title}{Public transit services for improving public health: A new approach to meet the transportation needs of vulnerable populations}.
 \newblock \bibinfo{journal}{Transportation Research Board Conference Proceedings} \bibinfo{volume}{2}.
@@ -137,12 +137,12 @@
 \newblock \bibinfo{title}{Causal inference in statistics, social, and biomedical sciences}.
 \newblock \bibinfo{publisher}{Cambridge University Press}.
 %Type = Article
-\bibitem[{Ingvardson and Nielsen(2019)}]{ingvardson2019relationship}
+\bibitem[{Ingvardson and Nielsen(2019)}]{grujivcic2014customer}
 \bibinfo{author}{Ingvardson, J.B.}, \bibinfo{author}{Nielsen, O.A.}, \bibinfo{year}{2019}.
 \newblock \bibinfo{title}{The relationship between objective and perceived public transport service quality}.
 \newblock \bibinfo{journal}{Journal of Public Transportation} \bibinfo{volume}{22}, \bibinfo{pages}{2}.
 %Type = Article
-\bibitem[{Kamga et~al.(2023)Kamga, Wang, Sapp and Agrawal}]{kamga2023utilizing}
+\bibitem[{Kamga et~al.(2023)Kamga, Wang, Sapp and Agrawal}]{nikolaidou2018utilizing}
 \bibinfo{author}{Kamga, C.}, \bibinfo{author}{Wang, M.}, \bibinfo{author}{Sapp, D.}, \bibinfo{author}{Agrawal, S.}, \bibinfo{year}{2023}.
 \newblock \bibinfo{title}{Utilizing social media for public transit service quality assessment and interactive mapping}.
 \newblock \bibinfo{journal}{Transportation Research Record} \bibinfo{volume}{2677}, \bibinfo{pages}{118--131}.
@@ -152,7 +152,7 @@
 \newblock \bibinfo{title}{Users of the world, unite! the challenges and opportunities of social media}.
 \newblock \bibinfo{journal}{Business horizons} \bibinfo{volume}{53}, \bibinfo{pages}{59--68}.
 %Type = Article
-\bibitem[{Karner and Niemeier(2016)}]{karner2016transportation}
+\bibitem[{Karner and Niemeier(2016)}]{karner2012transportation}
 \bibinfo{author}{Karner, A.}, \bibinfo{author}{Niemeier, D.}, \bibinfo{year}{2016}.
 \newblock \bibinfo{title}{Transportation planning and regional equity: History, policy and practice}.
 \newblock \bibinfo{journal}{Improving Pathways to Transit for Californians} .
@@ -162,7 +162,7 @@
 \newblock \bibinfo{title}{Regression based quasi-experimental approach when randomisation is not an option: interrupted time series analysis}.
 \newblock \bibinfo{journal}{BMJ} \bibinfo{volume}{350}, \bibinfo{pages}{h2750}.
 %Type = Article
-\bibitem[{Koppel et~al.(2023)Koppel, Kim and Hong}]{koppel2023disentangling}
+\bibitem[{Koppel et~al.(2023)Koppel, Kim and Hong}]{billings2011effects}
 \bibinfo{author}{Koppel, M.}, \bibinfo{author}{Kim, K.}, \bibinfo{author}{Hong, A.}, \bibinfo{year}{2023}.
 \newblock \bibinfo{title}{Disentangling the causal effect of rail transit on crime: A spatiotemporal analysis of the expo line in los angeles}.
 \newblock \bibinfo{journal}{Journal of Transport Geography} \bibinfo{volume}{109}, \bibinfo{pages}{103583}.
@@ -177,17 +177,17 @@
 \newblock \bibinfo{title}{Mining public opinion on transportation systems based on social media data}.
 \newblock \bibinfo{journal}{Sustainability} \bibinfo{volume}{11}, \bibinfo{pages}{4016}.
 %Type = Article
-\bibitem[{Li et~al.(2022)Li, Chen and Wang}]{li2022comparative}
+\bibitem[{Li et~al.(2022)Li, Chen and Wang}]{zhou2023metro}
 \bibinfo{author}{Li, X.}, \bibinfo{author}{Chen, Y.}, \bibinfo{author}{Wang, H.}, \bibinfo{year}{2022}.
 \newblock \bibinfo{title}{Comparative analysis of metro ridership before and after covid-19: A case study of shenzhen}.
 \newblock \bibinfo{journal}{Transportation Research Part A: Policy and Practice} \bibinfo{volume}{155}, \bibinfo{pages}{1--15}.
 %Type = Article
-\bibitem[{Liu and Ban(2017)}]{liu2017monitoring}
+\bibitem[{Liu and Ban(2017)}]{schweitzer2014planning}
 \bibinfo{author}{Liu, X.C.}, \bibinfo{author}{Ban, X.}, \bibinfo{year}{2017}.
 \newblock \bibinfo{title}{Monitoring transit service performance with social media: An application to the chicago transit authority}.
 \newblock \bibinfo{journal}{Transportation Research Record} \bibinfo{volume}{2649}, \bibinfo{pages}{42--50}.
 %Type = Article
-\bibitem[{Lopez~Bernal et~al.(2016)Lopez~Bernal, Cummins and Gasparrini}]{lopez2016interrupted}
+\bibitem[{Lopez~Bernal et~al.(2016)Lopez~Bernal, Cummins and Gasparrini}]{bernal2017interrupted}
 \bibinfo{author}{Lopez~Bernal, J.}, \bibinfo{author}{Cummins, S.}, \bibinfo{author}{Gasparrini, A.}, \bibinfo{year}{2016}.
 \newblock \bibinfo{title}{Interrupted time series regression for the evaluation of public health interventions: a tutorial}.
 \newblock \bibinfo{journal}{International journal of epidemiology} \bibinfo{volume}{46}, \bibinfo{pages}{348--355}.
@@ -197,17 +197,17 @@
 \newblock \bibinfo{title}{Interrupted time series regression for the evaluation of public health interventions: a tutorial}.
 \newblock \bibinfo{journal}{International Journal of Epidemiology} \bibinfo{volume}{46}, \bibinfo{pages}{348--355}.
 %Type = Article
-\bibitem[{Luong and Houston(2015)}]{luong2015public}
+\bibitem[{Luong and Houston(2015)}]{gao2021user}
 \bibinfo{author}{Luong, T.T.}, \bibinfo{author}{Houston, D.}, \bibinfo{year}{2015}.
 \newblock \bibinfo{title}{Public transit service quality in san francisco: Sentiment analysis of user-generated content}.
 \newblock \bibinfo{journal}{Transportation Research Record} \bibinfo{volume}{2538}, \bibinfo{pages}{11--20}.
 %Type = Article
-\bibitem[{Mathur et~al.(2021)Mathur, Zhang and Ukkusuri}]{mathur2021exploratory}
+\bibitem[{Mathur et~al.(2021)Mathur, Zhang and Ukkusuri}]{rashidi2017exploring}
 \bibinfo{author}{Mathur, S.}, \bibinfo{author}{Zhang, Y.}, \bibinfo{author}{Ukkusuri, S.V.}, \bibinfo{year}{2021}.
 \newblock \bibinfo{title}{An exploratory analysis of social media for transit service evaluation: Opportunities and challenges}.
 \newblock \bibinfo{journal}{Transportation Research Part C: Emerging Technologies} \bibinfo{volume}{125}, \bibinfo{pages}{103067}.
 %Type = Article
-\bibitem[{Mead(2021)}]{mead2021road}
+\bibitem[{Mead(2021)}]{stanley2011road}
 \bibinfo{author}{Mead, L.}, \bibinfo{year}{2021}.
 \newblock \bibinfo{title}{Road transport and climate change: Stepping off the greenhouse gas}.
 \newblock \bibinfo{journal}{Transportation Research Part D: Transport and Environment} \bibinfo{volume}{95}, \bibinfo{pages}{102826}.
@@ -276,7 +276,7 @@
 \newblock \bibinfo{title}{A causal inference approach to measure the vulnerability of urban metro systems}.
 \newblock \bibinfo{journal}{Transportation} \bibinfo{volume}{47}, \bibinfo{pages}{1939--1970}.
 %Type = Article
-\bibitem[{Zhang et~al.(2023)Zhang, Zhang, Lin, Wang, Liu and Lancelot~Milthorpe}]{zhang2023changes}
+\bibitem[{Zhang et~al.(2023)Zhang, Zhang, Lin, Wang, Liu and Lancelot~Milthorpe}]{liu2020spatiotemporal}
 \bibinfo{author}{Zhang, R.}, \bibinfo{author}{Zhang, Y.}, \bibinfo{author}{Lin, Y.}, \bibinfo{author}{Wang, S.}, \bibinfo{author}{Liu, Y.}, \bibinfo{author}{Lancelot~Milthorpe, F.}, \bibinfo{year}{2023}.
 \newblock \bibinfo{title}{Changes to commuting patterns in response to covid-19 and the associated impacts on air pollution in china}.
 \newblock \bibinfo{journal}{Transportation Research Part D: Transport and Environment} \bibinfo{volume}{114}, \bibinfo{pages}{103537}.
